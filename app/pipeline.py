@@ -11,7 +11,7 @@ from pydub import AudioSegment
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
 
 # اللغات واللهجات المدعومة + أصوات Edge TTS المجانية
 LANGUAGES = {
@@ -122,8 +122,9 @@ def translate(segments: list[dict], lang_key: str, source_lang: str) -> list[str
     )
     url = (
         f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}"
-        f":generateContent?key={GEMINI_API_KEY}"
+        ":generateContent"
     )
+    headers = {"x-goog-api-key": GEMINI_API_KEY}
     body = {
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {"temperature": 0.4, "responseMimeType": "application/json"},
@@ -131,15 +132,17 @@ def translate(segments: list[dict], lang_key: str, source_lang: str) -> list[str
     last_err = None
     for _ in range(3):
         try:
-            r = httpx.post(url, json=body, timeout=120)
+            r = httpx.post(url, json=body, headers=headers, timeout=120)
             r.raise_for_status()
             text = r.json()["candidates"][0]["content"]["parts"][0]["text"]
             out = json.loads(text)
             if isinstance(out, list) and len(out) == len(segments):
                 return [str(x) for x in out]
             last_err = "طول الترجمة لا يطابق عدد المقاطع"
+        except httpx.HTTPStatusError as e:
+            last_err = f"HTTP {e.response.status_code} من Gemini (النموذج: {GEMINI_MODEL})"
         except Exception as e:  # noqa: BLE001
-            last_err = str(e)
+            last_err = type(e).__name__
     raise RuntimeError(f"فشلت الترجمة: {last_err}")
 
 
