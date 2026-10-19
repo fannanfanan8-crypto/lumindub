@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LuminDub - دبلجة الفيديو بالذكاء الاصطناعي</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f1220;--card:#181c30;--line:#2a3050;--txt:#eef0fa;--mut:#9aa3c7;--acc:#7c5cff;--acc2:#22d3ee;--ok:#22c55e;--err:#ef4444}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:'Cairo',system-ui,sans-serif;line-height:1.7}
+.wrap{max-width:760px;margin:0 auto;padding:24px 16px 64px}
+header{text-align:center;padding:32px 0 8px}
+h1{margin:0;font-size:2.2rem;background:linear-gradient(90deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--mut);margin:6px 0 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin-top:20px}
+h2{font-size:1.05rem;margin:0 0 12px}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:28px;text-align:center;cursor:pointer;color:var(--mut);transition:.2s}
+.drop:hover,.drop.on{border-color:var(--acc);color:var(--txt)}
+.drop b{color:var(--txt)}
+.langs{display:flex;flex-wrap:wrap;gap:10px}
+.chip{position:relative}
+.chip input{position:absolute;opacity:0}
+.chip span{display:block;padding:8px 16px;border:1px solid var(--line);border-radius:999px;cursor:pointer;color:var(--mut);transition:.15s}
+.chip input:checked+span{background:var(--acc);border-color:var(--acc);color:#fff}
+.row{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+label.inline{display:flex;gap:6px;align-items:center;cursor:pointer;color:var(--mut)}
+.consent{display:flex;gap:10px;align-items:flex-start;font-size:.9rem;color:var(--mut);cursor:pointer}
+button{width:100%;margin-top:16px;padding:14px;border:0;border-radius:12px;font:inherit;font-weight:700;font-size:1.05rem;color:#fff;cursor:pointer;background:linear-gradient(90deg,var(--acc),var(--acc2))}
+button:disabled{opacity:.5;cursor:not-allowed}
+.bar{height:10px;background:var(--line);border-radius:99px;overflow:hidden;margin:10px 0}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .4s}
+.err{color:var(--err)}
+.res{border-top:1px solid var(--line);padding-top:14px;margin-top:14px}
+.res:first-of-type{border:0;padding:0;margin:0}
+video{width:100%;border-radius:10px;background:#000;margin:8px 0}
+a.dl{color:var(--acc2);text-decoration:none;font-weight:600}
+details{color:var(--mut);font-size:.9rem}
+.hidden{display:none}
+.note{font-size:.82rem;color:var(--mut);text-align:center;margin-top:24px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>LuminDub</h1>
+    <p class="sub">ارفع فيديو واحداً واحصل على نسخ مدبلجة بالدارجة المغربية والمصرية والخليجية والفرنسية والإنجليزية</p>
+  </header>
+
+  <div class="card">
+    <h2>1. الفيديو</h2>
+    <div class="drop" id="drop">
+      <div id="dropText">اسحب الفيديو هنا أو <b>اضغط للاختيار</b><br><small>حتى 50MB ودقيقتين إلى ثلاث دقائق (MP4 / MOV / WebM)</small></div>
+      <input type="file" id="file" accept="video/*" class="hidden">
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>2. اللغات واللهجات</h2>
+    <div class="langs" id="langs"></div>
+  </div>
+
+  <div class="card">
+    <h2>3. نوع الصوت</h2>
+    <div class="row">
+      <label class="inline"><input type="radio" name="g" value="male" checked> صوت رجالي</label>
+      <label class="inline"><input type="radio" name="g" value="female"> صوت نسائي</label>
+    </div>
+    <label class="consent" style="margin-top:16px">
+      <input type="checkbox" id="consent">
+      <span>أقر بأنني أملك حقوق هذا الفيديو، أو لدي إذن بدبلجته، وبأنني لن أستخدم الأداة لانتحال شخصية أو التضليل.</span>
+    </label>
+    <button id="go" disabled>ابدأ الدبلجة</button>
+  </div>
+
+  <div class="card hidden" id="progress">
+    <h2 id="step">جارٍ التجهيز...</h2>
+    <div class="bar"><i id="fill"></i></div>
+    <div id="perr" class="err"></div>
+  </div>
+
+  <div class="card hidden" id="results"><h2>النتائج</h2><div id="list"></div></div>
+
+  <p class="note">النسخة التجريبية تستخدم أصواتاً عصبية جاهزة (وليس استنساخ صوتك). الملفات تُحذف بعد ساعة.</p>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const defaults = ['darija','egyptian','gulf','fr','en'];
+let fileObj = null;
+
+fetch('/api/languages').then(r=>r.json()).then(L=>{
+  $('#langs').innerHTML = Object.entries(L).map(([k,v])=>
+    `<label class="chip"><input type="checkbox" value="${k}" ${defaults.includes(k)&&k!=='en'?'checked':''}><span>${v}</span></label>`).join('');
+});
+
+const drop=$('#drop'), fileIn=$('#file');
+drop.onclick=()=>fileIn.click();
+['dragover','dragenter'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.add('on')}));
+['dragleave','drop'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.remove('on')}));
+drop.addEventListener('drop',ev=>setFile(ev.dataTransfer.files[0]));
+fileIn.onchange=()=>setFile(fileIn.files[0]);
+function setFile(f){
+  if(!f) return;
+  if(f.size>50*1024*1024){alert('الملف أكبر من 50MB');return}
+  fileObj=f; $('#dropText').innerHTML=`<b>${f.name}</b><br><small>${(f.size/1048576).toFixed(1)} MB</small>`; check();
+}
+function check(){ $('#go').disabled = !(fileObj && $('#consent').checked); }
+$('#consent').onchange=check;
+
+$('#go').onclick=async()=>{
+  const langs=[...document.querySelectorAll('#langs input:checked')].map(i=>i.value);
+  if(!langs.length){alert('اختر لغة واحدة على الأقل');return}
+  const fd=new FormData();
+  fd.append('file',fileObj); fd.append('langs',langs.join(','));
+  fd.append('gender',document.querySelector('input[name=g]:checked').value);
+  fd.append('consent',$('#consent').checked);
+  $('#go').disabled=true; $('#progress').classList.remove('hidden');
+  $('#results').classList.add('hidden'); $('#list').innerHTML=''; $('#perr').textContent='';
+  $('#step').textContent='جارٍ رفع الفيديو...'; $('#fill').style.width='2%';
+  try{
+    const r=await fetch('/api/jobs',{method:'POST',body:fd});
+    if(!r.ok) throw new Error((await r.json()).detail||'فشل الرفع');
+    poll((await r.json()).job_id);
+  }catch(e){ $('#perr').textContent=e.message; $('#go').disabled=false; }
+};
+
+async function poll(id){
+  const r=await fetch('/api/jobs/'+id);
+  if(!r.ok){ $('#perr').textContent='انتهت صلاحية المهمة'; $('#go').disabled=false; return }
+  const j=await r.json();
+  $('#step').textContent=j.step; $('#fill').style.width=j.progress+'%';
+  render(j.outputs);
+  if(j.status==='done'){ $('#go').disabled=false; return }
+  if(j.status==='error'){ $('#perr').textContent=j.error; $('#go').disabled=false; return }
+  setTimeout(()=>poll(id),2500);
+}
+
+const shown=new Set();
+function render(o){
+  const keys=Object.keys(o); if(!keys.length) return;
+  $('#results').classList.remove('hidden');
+  keys.filter(k=>!shown.has(k)).forEach(k=>{
+    shown.add(k);
+    const x=o[k], d=document.createElement('div'); d.className='res';
+    d.innerHTML=`<b>${x.label}</b><video controls src="${x.url}"></video>
+      <a class="dl" href="${x.url}" download>تحميل الفيديو</a>
+      <details><summary>النص المترجم</summary><p>${x.text.replace(/</g,'&lt;')}</p></details>`;
+    $('#list').appendChild(d);
+  });
+}
+</script>
+</body>
+</html>
