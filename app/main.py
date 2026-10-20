@@ -21,6 +21,7 @@ JOB_TTL = 3600  # حذف الملفات بعد ساعة (قرص Render المج�
 
 app = FastAPI(title="LuminDub")
 JOBS: dict[str, dict] = {}
+JOB_LOCK = threading.Semaphore(1)  # مهمة واحدة في كل مرة: المعالج المجاني ضعيف
 
 
 def cleanup() -> None:
@@ -32,7 +33,21 @@ def cleanup() -> None:
 
 
 def process(job_id: str, video: Path, langs: list[str], gender: str) -> None:
+    JOBS[job_id].update(step="في قائمة الانتظار", progress=1)
+    with JOB_LOCK:
+        _process(job_id, video, langs, gender)
+
+
+def _process(job_id: str, video: Path, langs: list[str], gender: str) -> None:
     job = JOBS[job_id]
+    t0 = last = time.perf_counter()
+
+    def lap(name: str) -> None:
+        nonlocal last
+        now = time.perf_counter()
+        print(f"[job {job_id}] {name}: {now - last:.1f}s (total {now - t0:.1f}s)", flush=True)
+        last = now
+
     folder = DATA / job_id
     try:
         job.update(status="running", step="استخراج الصوت", progress=5)
@@ -41,13 +56,16 @@ def process(job_id: str, video: Path, langs: list[str], gender: str) -> None:
             raise RuntimeError(f"الحد الأقصى للمدة {MAX_SECONDS} ثانية في النسخة المجانية")
         audio = folder / "audio.mp3"
         pl.extract_audio(video, audio)
+        lap("extract_audio")
 
         job.update(step="التعرف على الكلام", progress=15)
         src_lang, segments = pl.transcribe(audio)
+        lap("transcribe")
         job["source_language"] = src_lang
 
         job.update(step="ترجمة وتكييف كل اللغات معاً", progress=25)
         all_texts = pl.translate_many(segments, langs, src_lang)
+        lap("translate_all")
 
         n = len(langs)
         for i, key in enumerate(langs):
@@ -58,10 +76,12 @@ def process(job_id: str, video: Path, langs: list[str], gender: str) -> None:
             job.update(step=f"توليد الصوت: {label}", progress=base)
             voice = pl.LANGUAGES[key]["voices"][gender]
             dub = pl.build_dub_track(segments, texts, voice, folder / key, total)
+            lap(f"tts+mix[{key}]")
 
             job.update(step=f"دمج الفيديو: {label}", progress=base + int(40 / n))
             out = folder / f"{key}.mp4"
             pl.mux(video, dub, out)
+            lap(f"mux[{key}]")
             job["outputs"][key] = {
                 "label": label,
                 "url": f"/files/{job_id}/{key}.mp4",
