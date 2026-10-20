@@ -46,18 +46,20 @@ def process(job_id: str, video: Path, langs: list[str], gender: str) -> None:
         src_lang, segments = pl.transcribe(audio)
         job["source_language"] = src_lang
 
+        job.update(step="ترجمة وتكييف كل اللغات معاً", progress=25)
+        all_texts = pl.translate_many(segments, langs, src_lang)
+
         n = len(langs)
         for i, key in enumerate(langs):
             label = pl.LANGUAGES[key]["label"]
-            base = 20 + int(75 * i / n)
-            job.update(step=f"ترجمة وتكييف: {label}", progress=base)
-            texts = pl.translate(segments, key, src_lang)
+            base = 35 + int(60 * i / n)
+            texts = all_texts[key]
 
-            job.update(step=f"توليد الصوت: {label}", progress=base + int(30 / n))
+            job.update(step=f"توليد الصوت: {label}", progress=base)
             voice = pl.LANGUAGES[key]["voices"][gender]
             dub = pl.build_dub_track(segments, texts, voice, folder / key, total)
 
-            job.update(step=f"دمج الفيديو: {label}", progress=base + int(60 / n))
+            job.update(step=f"دمج الفيديو: {label}", progress=base + int(40 / n))
             out = folder / f"{key}.mp4"
             pl.mux(video, dub, out)
             job["outputs"][key] = {
