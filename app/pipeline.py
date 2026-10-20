@@ -340,7 +340,7 @@ SR = 24000  # معدل عيّنات منخفض أحادي: أخف 4 مرات ف�
 
 
 def _load(path: Path) -> AudioSegment:
-    return AudioSegment.from_file(path).set_frame_rate(SR).set_channels(1)
+    return AudioSegment.from_file(path).set_frame_rate(SR).set_channels(1).set_sample_width(2)
 
 
 def _speed_up(src: Path, factor: float) -> Path:
@@ -382,14 +382,24 @@ def build_dub_track(segments, texts, voice, folder: Path, total_sec: float) -> P
         except Exception:  # noqa: BLE001
             pass  # نكمل بالتسريع فقط
 
-    track = AudioSegment.silent(duration=int(total_sec * 1000) + 500, frame_rate=SR).set_channels(1)
+    # تجميع المقاطع بتسلسل واحد (O(n)) بدل overlay الذي ينسخ المسار كاملاً مع كل جملة
+    chunks: list[bytes] = []
+    cursor = 0
     for i, seg in enumerate(segments):
         audio = audios[i]
         if len(audio) > limits[i]:
             factor = min(len(audio) / limits[i], 1.35)  # حد أقصى للتسريع حفاظاً على الوضوح
             audio = _load(_speed_up(files[i], factor))
         audio = audio.fade_in(15).fade_out(40)
-        track = track.overlay(audio, position=int(seg["start"] * 1000))
+        pos = max(int(seg["start"] * 1000), cursor)  # لا نسمح بتداخل الجمل
+        if pos > cursor:
+            chunks.append(AudioSegment.silent(duration=pos - cursor, frame_rate=SR).raw_data)
+        chunks.append(audio.raw_data)
+        cursor = pos + len(audio)
+    end = int(total_sec * 1000) + 500
+    if cursor < end:
+        chunks.append(AudioSegment.silent(duration=end - cursor, frame_rate=SR).raw_data)
+    track = AudioSegment(data=b"".join(chunks), sample_width=2, frame_rate=SR, channels=1)
     track = normalize(track, headroom=1.5)
     out = folder / "dub.mp3"
     track.export(out, format="mp3")
@@ -399,6 +409,6 @@ def build_dub_track(segments, texts, voice, folder: Path, total_sec: float) -> P
 def mux(video: Path, dub: Path, out: Path) -> None:
     run([
         "ffmpeg", "-y", "-i", str(video), "-i", str(dub),
-        "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy", "-c:a", "aac",
-        "-shortest", str(out),
+        "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy", "-c:a", "aac", "-b:a", "96k",
+        "-movflags", "+faststart", "-shortest", str(out),
     ])
