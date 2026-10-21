@@ -107,6 +107,43 @@ LANGUAGES = {
 }
 
 
+# أصوات Edge TTS المتاحة لكل لغة: (المعرّف، الاسم المعروض، الجنس)
+VOICE_OPTIONS = {
+    "darija": [
+        ("ar-MA-JamalNeural", "جمال (رجل)", "male"),
+        ("ar-MA-MounaNeural", "منى (امرأة)", "female"),
+    ],
+    "egyptian": [
+        ("ar-EG-ShakirNeural", "شاكر (رجل)", "male"),
+        ("ar-EG-SalmaNeural", "سلمى (امرأة)", "female"),
+    ],
+    "gulf": [
+        ("ar-AE-HamdanNeural", "حمدان - إماراتي (رجل)", "male"),
+        ("ar-AE-FatimaNeural", "فاطمة - إماراتية (امرأة)", "female"),
+        ("ar-SA-HamedNeural", "حامد - سعودي (رجل)", "male"),
+        ("ar-SA-ZariyahNeural", "زارية - سعودية (امرأة)", "female"),
+    ],
+    "fr": [
+        ("fr-FR-HenriNeural", "Henri (homme)", "male"),
+        ("fr-FR-DeniseNeural", "Denise (femme)", "female"),
+        ("fr-FR-RemyMultilingualNeural", "Rémy (homme)", "male"),
+        ("fr-FR-VivienneMultilingualNeural", "Vivienne (femme)", "female"),
+    ],
+    "en": [
+        ("en-US-GuyNeural", "Guy (man)", "male"),
+        ("en-US-JennyNeural", "Jenny (woman)", "female"),
+        ("en-US-DavisNeural", "Davis (man)", "male"),
+        ("en-US-AriaNeural", "Aria (woman)", "female"),
+        ("en-GB-RyanNeural", "Ryan - UK (man)", "male"),
+        ("en-GB-SoniaNeural", "Sonia - UK (woman)", "female"),
+    ],
+}
+
+
+def allowed_voices(lang_key: str) -> set[str]:
+    return {v[0] for v in VOICE_OPTIONS[lang_key]}
+
+
 class Line(str):
     """نص مترجم للعرض، ويحمل في .tts صيغة مهيأة للنطق."""
 
@@ -221,7 +258,18 @@ def _examples_block(cfg: dict) -> str:
     return f"Examples of the exact register wanted:\n{lines}\n"
 
 
-def _translate_pass(segments: list[dict], cfg: dict, source_lang: str) -> list[str]:
+def _glossary_block(glossary: str) -> str:
+    g = "\n".join(l.strip() for l in (glossary or "").splitlines() if l.strip())[:1500]
+    if not g:
+        return ""
+    return (
+        "Glossary written by the video owner. ALWAYS use exactly these renderings "
+        "(left = source term, right = required output; if only one term is given, "
+        "keep it untranslated):\n" + g + "\n\n"
+    )
+
+
+def _translate_pass(segments: list[dict], cfg: dict, source_lang: str, glossary: str = "") -> list[str]:
     items = [
         {"id": i, "text": s["text"], "seconds": round(s["end"] - s["start"], 1)}
         for i, s in enumerate(segments)
@@ -232,6 +280,7 @@ def _translate_pass(segments: list[dict], cfg: dict, source_lang: str) -> list[s
         "video, so keep terminology, names and the speaker's voice consistent.\n\n"
         f"{cfg['guide']}\n\n"
         f"{_examples_block(cfg)}\n"
+        f"{_glossary_block(glossary)}"
         "Rules:\n"
         "- Translate by MEANING, never word by word. Rewrite idioms, humor and cultural "
         "references so they feel native to this audience.\n"
@@ -288,10 +337,10 @@ def _refine_pass(lines: list[str], cfg: dict) -> list[tuple[str, str]]:
     return [(str(o["text"]).strip(), str(o.get("tts") or o["text"]).strip()) for o in out]
 
 
-def translate(segments: list[dict], lang_key: str, source_lang: str) -> list[str]:
+def translate(segments: list[dict], lang_key: str, source_lang: str, glossary: str = "") -> list[str]:
     """ترجمة بالمعنى بلهجة الهدف ثم صقل لهجي وتهيئة للنطق. يرجع Line (نص + .tts)."""
     cfg = LANGUAGES[lang_key]
-    draft = _translate_pass(segments, cfg, source_lang)
+    draft = _translate_pass(segments, cfg, source_lang, glossary)
     if not cfg["arabic"]:
         return [Line(t) for t in draft]  # الفرنسية/الإنجليزية: طلب واحد يوفر الحصة
     try:
@@ -301,10 +350,10 @@ def translate(segments: list[dict], lang_key: str, source_lang: str) -> list[str
         return [Line(t) for t in draft]
 
 
-def translate_many(segments: list[dict], langs: list[str], source_lang: str) -> dict:
+def translate_many(segments: list[dict], langs: list[str], source_lang: str, glossary: str = "") -> dict:
     """يترجم كل اللغات بالتوازي (عمل شبكة فقط). يرجع {لغة: [Line]}."""
     with ThreadPoolExecutor(max_workers=min(2, len(langs))) as ex:
-        futs = {k: ex.submit(translate, segments, k, source_lang) for k in langs}
+        futs = {k: ex.submit(translate, segments, k, source_lang, glossary) for k in langs}
         return {k: f.result() for k, f in futs.items()}
 
 
@@ -326,8 +375,8 @@ def _shorten(lines: list[str], cfg: dict, max_chars: list[int]) -> list[str]:
 # ------------------------------------------------------------------- TTS
 
 def _lang_from_voice(voice: str) -> str:
-    for key, cfg in LANGUAGES.items():
-        if voice in cfg["voices"].values():
+    for key in VOICE_OPTIONS:
+        if voice in allowed_voices(key):
             return key
     return "en"
 
@@ -367,11 +416,11 @@ def _speed_up(src: Path, factor: float) -> Path:
     return dst
 
 
-def build_dub_track(segments, texts, voice, folder: Path, total_sec: float) -> Path:
+def build_dub_track(segments, texts, voice, folder: Path, total_sec: float, rate: str | None = None) -> Path:
     folder.mkdir(parents=True, exist_ok=True)
     lang_key = _lang_from_voice(voice)
     cfg = LANGUAGES[lang_key]
-    rate = cfg["rate"]
+    rate = rate or cfg["rate"]
     n = len(segments)
     spoken = [getattr(t, "tts", None) or str(t) for t in texts]
 
@@ -422,6 +471,25 @@ def build_dub_track(segments, texts, voice, folder: Path, total_sec: float) -> P
     out = folder / "dub.mp3"
     track.export(out, format="mp3")
     return out
+
+
+def _srt_time(sec: float) -> str:
+    ms = int(round(sec * 1000))
+    h, ms = divmod(ms, 3600000)
+    m, ms = divmod(ms, 60000)
+    sec_, ms = divmod(ms, 1000)
+    return f"{h:02d}:{m:02d}:{sec_:02d},{ms:03d}"
+
+
+def make_srt(segments: list[dict], texts: list[str], path: Path) -> None:
+    blocks = []
+    for i, (seg, t) in enumerate(zip(segments, texts), 1):
+        blocks.append(f"{i}\n{_srt_time(seg['start'])} --> {_srt_time(seg['end'])}\n{str(t).strip()}\n")
+    path.write_text("\n".join(blocks), encoding="utf-8")
+
+
+def preview_tts(text: str, voice: str, rate: str, path: Path) -> None:
+    asyncio.run(_tts_one(text, voice, rate, path))
 
 
 def mux(video: Path, dub: Path, out: Path) -> None:
