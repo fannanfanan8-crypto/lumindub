@@ -3,16 +3,36 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LuminDub - دبلجة الفيديو بالذكاء الاصطناعي</title>
+<title>LuminDub</title>
+<meta name="description" content="AI video dubbing in Moroccan Darija, Egyptian, Gulf Arabic, French and English.">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0f1220;--card:#181c30;--line:#2a3050;--txt:#eef0fa;--mut:#9aa3c7;--acc:#7c5cff;--acc2:#22d3ee;--ok:#22c55e;--err:#ef4444}
 *{box-sizing:border-box}
+html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--txt);font-family:'Cairo',system-ui,sans-serif;line-height:1.7}
-.wrap{max-width:760px;margin:0 auto;padding:24px 16px 64px}
-header{text-align:center;padding:32px 0 8px}
-h1{margin:0;font-size:2.2rem;background:linear-gradient(90deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
-.sub{color:var(--mut);margin:6px 0 0}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px 48px}
+.top{display:flex;justify-content:space-between;align-items:center;padding:14px 0}
+.logo{font-weight:700;font-size:1.3rem;background:linear-gradient(90deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lang{width:auto;padding:6px 10px;border-radius:999px}
+.hero{text-align:center;padding:28px 0 12px}
+.hero h1{margin:0;font-size:clamp(1.6rem,6vw,2.4rem);line-height:1.3}
+.hero h1 em{font-style:normal;background:linear-gradient(90deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{color:var(--mut);margin:12px auto 20px;max-width:560px}
+.cta{display:inline-block;padding:13px 28px;border-radius:12px;font-weight:700;color:#fff;text-decoration:none;background:linear-gradient(90deg,var(--acc),var(--acc2))}
+section{margin-top:40px}
+h2.sec{font-size:1.25rem;margin:0 0 14px;text-align:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.mini{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.mini b{display:block;margin-bottom:4px}
+.mini p{margin:0;color:var(--mut);font-size:.9rem}
+.num{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--acc);color:#fff;font-weight:700;margin-bottom:8px}
+.exs{display:grid;gap:12px}
+.ex{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.ex .src{color:var(--mut);margin-bottom:8px;direction:ltr;text-align:start}
+.ex .o{display:flex;gap:10px;padding:6px 0;border-top:1px solid var(--line)}
+.ex .o span:first-child{flex:none;width:110px;color:var(--acc2);font-size:.85rem}
+.ex .o span:last-child{direction:rtl}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin-top:20px}
 h2{font-size:1.05rem;margin:0 0 12px}
 .drop{border:2px dashed var(--line);border-radius:12px;padding:28px;text-align:center;cursor:pointer;color:var(--mut);transition:.2s}
@@ -34,13 +54,16 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .hint{color:var(--mut);font-size:.85rem;margin:0 0 12px}
 select,textarea{width:100%;background:#10132a;color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit}
 textarea{resize:vertical;min-height:62px}
-details{color:var(--mut);font-size:.9rem;margin-top:14px}
+details{color:var(--mut);font-size:.92rem}
 details summary{cursor:pointer}
+.faq details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-top:10px}
+.faq summary{color:var(--txt);font-weight:600}
+.faq p{margin:8px 0 0}
+.tool details{margin-top:14px}
 .ctl{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
 .ctl label{font-size:.82rem;color:var(--mut);display:block;margin-bottom:4px}
 .seg{border-top:1px solid var(--line);padding:12px 0}
-.seg:first-of-type{border:0}
-.src{font-size:.82rem;color:var(--mut);margin-bottom:6px;direction:auto}
+.src2{font-size:.82rem;color:var(--mut);margin-bottom:6px;direction:auto}
 .edit{display:flex;gap:8px;align-items:flex-start}
 .play{flex:none;width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:#10132a;color:var(--acc2);font-size:1.1rem;cursor:pointer}
 .res{border-top:1px solid var(--line);padding-top:14px;margin-top:14px}
@@ -48,87 +71,305 @@ details summary{cursor:pointer}
 video{width:100%;border-radius:10px;background:#000;margin:8px 0}
 a.dl{color:var(--acc2);text-decoration:none;font-weight:600;margin-inline-end:16px}
 .hidden{display:none}
-.note{font-size:.82rem;color:var(--mut);text-align:center;margin-top:24px}
+.note{font-size:.82rem;color:var(--mut);text-align:center;margin-top:28px}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <h1>LuminDub</h1>
-    <p class="sub">ارفع فيديو واحداً واحصل على نسخ مدبلجة بالدارجة المغربية والمصرية والخليجية والفرنسية والإنجليزية</p>
-  </header>
+  <div class="top">
+    <span class="logo">LuminDub</span>
+    <select id="uiLang" class="lang" aria-label="Language">
+      <option value="ar">العربية</option><option value="fr">Français</option><option value="en">English</option>
+    </select>
+  </div>
 
-  <div id="setup">
-    <div class="card">
-      <h2>1. الفيديو</h2>
-      <div class="drop" id="drop">
-        <div id="dropText">اسحب الفيديو هنا أو <b>اضغط للاختيار</b><br><small>حتى 50MB وثلاث دقائق (MP4 / MOV / WebM)</small></div>
-        <input type="file" id="file" accept="video/*" class="hidden">
+  <div class="hero">
+    <h1 data-i18n="hero_h"></h1>
+    <p data-i18n="hero_p"></p>
+    <a class="cta" href="#tool" data-i18n="cta"></a>
+  </div>
+
+  <section>
+    <h2 class="sec" data-i18n="how_t"></h2>
+    <div class="grid">
+      <div class="mini"><span class="num">1</span><b data-i18n="s1_t"></b><p data-i18n="s1_d"></p></div>
+      <div class="mini"><span class="num">2</span><b data-i18n="s2_t"></b><p data-i18n="s2_d"></p></div>
+      <div class="mini"><span class="num">3</span><b data-i18n="s3_t"></b><p data-i18n="s3_d"></p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="sec" data-i18n="ex_t"></h2>
+    <p class="hint" style="text-align:center" data-i18n="ex_n"></p>
+    <div class="exs" id="examples"></div>
+  </section>
+
+  <section>
+    <h2 class="sec" data-i18n="feat_t"></h2>
+    <div class="grid">
+      <div class="mini"><b data-i18n="f1_t"></b><p data-i18n="f1_d"></p></div>
+      <div class="mini"><b data-i18n="f2_t"></b><p data-i18n="f2_d"></p></div>
+      <div class="mini"><b data-i18n="f3_t"></b><p data-i18n="f3_d"></p></div>
+      <div class="mini"><b data-i18n="f4_t"></b><p data-i18n="f4_d"></p></div>
+    </div>
+  </section>
+
+  <section id="tool" class="tool">
+    <h2 class="sec" data-i18n="tool_t"></h2>
+    <div id="setup">
+      <div class="card">
+        <h2 data-i18n="c1_t"></h2>
+        <div class="drop" id="drop">
+          <div id="dropText"><span data-i18n="drop_a"></span> <b data-i18n="drop_b"></b><br><small data-i18n="drop_h"></small></div>
+          <input type="file" id="file" accept="video/*" class="hidden">
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 data-i18n="c2_t"></h2>
+        <div class="langs" id="langs"></div>
+        <details>
+          <summary data-i18n="gl_s"></summary>
+          <p class="hint" data-i18n="gl_h"></p>
+          <textarea id="glossary" data-i18n-ph="gl_p"></textarea>
+        </details>
+      </div>
+
+      <div class="card">
+        <h2 data-i18n="c3_t"></h2>
+        <div class="row">
+          <label class="inline"><input type="radio" name="g" value="male" checked> <span data-i18n="male"></span></label>
+          <label class="inline"><input type="radio" name="g" value="female"> <span data-i18n="female"></span></label>
+        </div>
+        <label class="check"><input type="checkbox" id="review" checked><span data-i18n="rev_chk"></span></label>
+        <label class="check"><input type="checkbox" id="consent"><span data-i18n="con_chk"></span></label>
+        <button class="main" id="go" disabled data-i18n="go"></button>
       </div>
     </div>
 
-    <div class="card">
-      <h2>2. اللغات واللهجات</h2>
-      <div class="langs" id="langs"></div>
-      <details>
-        <summary>قاموس مصطلحاتك (اختياري)</summary>
-        <p class="hint">سطر لكل مصطلح. مثال: <code>YouTube=يوتيوب</code> أو اسم علامة تريد إبقاءه كما هو.</p>
-        <textarea id="glossary" placeholder="LuminDub&#10;course=الكورس"></textarea>
-      </details>
+    <div class="card hidden" id="progress">
+      <h2 id="step"></h2>
+      <div class="bar"><i id="fill"></i></div>
+      <div id="perr" class="err"></div>
     </div>
 
-    <div class="card">
-      <h2>3. الصوت والخيارات</h2>
-      <div class="row">
-        <label class="inline"><input type="radio" name="g" value="male" checked> صوت رجالي</label>
-        <label class="inline"><input type="radio" name="g" value="female"> صوت نسائي</label>
+    <div class="card hidden" id="reviewCard">
+      <h2 data-i18n="rev_t"></h2>
+      <p class="hint" data-i18n="rev_h"></p>
+      <div class="tabs" id="tabs"></div>
+      <div id="panels"></div>
+      <div class="ctl">
+        <div><label data-i18n="speed"></label>
+          <select id="rate">
+            <option value="" data-i18n="sp0"></option><option value="-15%" data-i18n="sp1"></option>
+            <option value="-8%" data-i18n="sp2"></option><option value="+8%" data-i18n="sp3"></option>
+            <option value="+15%" data-i18n="sp4"></option>
+          </select></div>
       </div>
-      <label class="check"><input type="checkbox" id="review" checked>
-        <span>أريد مراجعة النص وتعديله وسماع معاينة قبل الدبلجة (موصى به، يحسّن اللهجة)</span></label>
-      <label class="check"><input type="checkbox" id="consent">
-        <span>أقر بأنني أملك حقوق هذا الفيديو، أو لدي إذن بدبلجته، وبأنني لن أستخدم الأداة لانتحال شخصية أو التضليل.</span></label>
-      <button class="main" id="go" disabled>ابدأ</button>
+      <button class="main" id="renderBtn" data-i18n="render"></button>
     </div>
-  </div>
 
-  <div class="card hidden" id="progress">
-    <h2 id="step">جارٍ التجهيز...</h2>
-    <div class="bar"><i id="fill"></i></div>
-    <div id="perr" class="err"></div>
-  </div>
+    <div class="card hidden" id="results"><h2 data-i18n="res_t"></h2><div id="list"></div></div>
+  </section>
 
-  <div class="card hidden" id="reviewCard">
-    <h2>مراجعة النص</h2>
-    <p class="hint">عدّل أي جملة بما يناسبك، واضغط ▶ لسماع الجملة قبل المتابعة.</p>
-    <div class="tabs" id="tabs"></div>
-    <div id="panels"></div>
-    <div class="ctl">
-      <div><label>سرعة الكلام (كل اللغات)</label>
-        <select id="rate">
-          <option value="">افتراضية</option><option value="-15%">أبطأ كثيراً</option>
-          <option value="-8%">أبطأ</option><option value="+8%">أسرع</option><option value="+15%">أسرع كثيراً</option>
-        </select></div>
-    </div>
-    <button class="main" id="renderBtn">ابدأ الدبلجة بهذا النص</button>
-  </div>
+  <section class="faq">
+    <h2 class="sec" data-i18n="faq_t"></h2>
+    <details><summary data-i18n="q1"></summary><p data-i18n="a1"></p></details>
+    <details><summary data-i18n="q2"></summary><p data-i18n="a2"></p></details>
+    <details><summary data-i18n="q3"></summary><p data-i18n="a3"></p></details>
+    <details><summary data-i18n="q4"></summary><p data-i18n="a4"></p></details>
+    <details><summary data-i18n="q5"></summary><p data-i18n="a5"></p></details>
+  </section>
 
-  <div class="card hidden" id="results"><h2>النتائج</h2><div id="list"></div></div>
-
-  <p class="note">النسخة التجريبية تستخدم أصواتاً عصبية جاهزة (وليس استنساخ صوتك). الملفات تُحذف بعد ساعة.</p>
+  <p class="note" data-i18n="foot"></p>
 </div>
 
 <script>
+const I18N = {
+ar: {
+  hero_h:'دبلج فيديوهاتك بلهجات حقيقية، لا بالفصحى',
+  hero_p:'ارفع فيديو واحداً، وخذ نسخاً مدبلجة بالدارجة المغربية والمصرية والخليجية والفرنسية والإنجليزية. راجع النص واسمع المعاينة قبل الإنتاج.',
+  cta:'جرّب الآن',
+  how_t:'كيف يعمل', s1_t:'ارفع الفيديو', s1_d:'فيديو حتى 50MB وثلاث دقائق، ثم اختر اللغات واللهجات.',
+  s2_t:'راجع وعدّل', s2_d:'نترجم بالمعنى ونكيّف اللهجة، وأنت تعدّل أي جملة وتسمعها.',
+  s3_t:'حمّل النتيجة', s3_d:'فيديو مدبلج وملف ترجمة SRT لكل لغة.',
+  ex_t:'مثال على الفرق', ex_n:'أمثلة توضيحية نصية لأسلوب التكييف، وليست عينات صوتية من الخدمة.',
+  ex_src:'الجملة الأصلية',
+  feat_t:'لماذا LuminDub', f1_t:'لهجات حقيقية', f1_d:'مفردات وأمثلة خاصة بكل لهجة، ومراجعة ثانية تستبدل الفصحى بالعامية.',
+  f2_t:'أنت المتحكم', f2_d:'عدّل النص، اختر الصوت والسرعة، وأضف قاموس مصطلحاتك.',
+  f3_t:'ترجمة SRT', f3_d:'ملف ترجمة جاهز لكل لغة لاستخدامه في أي منصة.',
+  f4_t:'مجاني وخاص', f4_d:'بلا حساب. تُحذف ملفاتك تلقائياً بعد ساعة.',
+  tool_t:'ابدأ الدبلجة', c1_t:'1. الفيديو', drop_a:'اسحب الفيديو هنا أو', drop_b:'اضغط للاختيار',
+  drop_h:'حتى 50MB وثلاث دقائق (MP4 / MOV / WebM)',
+  c2_t:'2. اللغات واللهجات', gl_s:'قاموس مصطلحاتك (اختياري)',
+  gl_h:'سطر لكل مصطلح. مثال: YouTube=يوتيوب، أو اسم علامة تريد إبقاءه كما هو.', gl_p:'LuminDub\ncourse=الكورس',
+  c3_t:'3. الصوت والخيارات', male:'صوت رجالي', female:'صوت نسائي',
+  rev_chk:'أريد مراجعة النص وتعديله وسماع معاينة قبل الدبلجة (موصى به، يحسّن اللهجة)',
+  con_chk:'أقر بأنني أملك حقوق هذا الفيديو، أو لدي إذن بدبلجته، وبأنني لن أستخدم الأداة لانتحال شخصية أو التضليل.',
+  go:'ابدأ', rev_t:'مراجعة النص', rev_h:'عدّل أي جملة بما يناسبك، واضغط ▶ لسماع الجملة قبل المتابعة.',
+  voice:'الصوت', speed:'سرعة الكلام (كل اللغات)', sp0:'افتراضية', sp1:'أبطأ كثيراً', sp2:'أبطأ', sp3:'أسرع', sp4:'أسرع كثيراً',
+  render:'ابدأ الدبلجة بهذا النص', res_t:'النتائج', dl_v:'تحميل الفيديو', dl_s:'تحميل الترجمة (SRT)', txt:'النص المترجم',
+  faq_t:'أسئلة شائعة',
+  q1:'هل الخدمة مجانية؟', a1:'نعم في هذه النسخة التجريبية، مع حد يومي لكل زائر.',
+  q2:'هل يُستنسخ صوتي؟', a2:'لا. نستخدم أصواتاً عصبية جاهزة، واستنساخ الصوت ميزة قادمة.',
+  q3:'ما حدود الفيديو؟', a3:'حتى 50MB وثلاث دقائق. وقد يتأخر أول طلب نحو دقيقة بعد فترة خمول.',
+  q4:'هل تُحفظ ملفاتي؟', a4:'تُحذف من الخادم بعد ساعة. ولأجل المعالجة يُرسل الصوت والنص إلى خدمات Groq وGoogle وMicrosoft.',
+  q5:'هل تتطابق حركة الشفاه؟', a5:'ليس بعد. مطابقة الشفاه ميزة مستقبلية.',
+  foot:'النسخة التجريبية تستخدم أصواتاً عصبية جاهزة (وليس استنساخ صوتك). الملفات تُحذف بعد ساعة.',
+  uploading:'جارٍ رفع الفيديو...', stopped:'توقفت العملية', expired:'انتهت صلاحية المهمة (تُحذف بعد ساعة)',
+  big:'الملف أكبر من 50MB', pick:'اختر لغة واحدة على الأقل', up_fail:'فشل الرفع', start_fail:'فشل البدء', prev_fail:'تعذّرت المعاينة',
+  n_rev:'النص جاهز للمراجعة', n_done:'اكتملت الدبلجة ✅', preview:'معاينة'
+},
+fr: {
+  hero_h:'Doublez vos vidéos dans de vrais dialectes, pas en arabe standard',
+  hero_p:"Importez une vidéo et obtenez des versions doublées en darija marocain, arabe égyptien, khaliji, français et anglais. Relisez le texte et écoutez un aperçu avant de lancer.",
+  cta:'Essayer maintenant',
+  how_t:'Comment ça marche', s1_t:'Importez', s1_d:"Une vidéo jusqu'à 50 Mo et 3 minutes, puis choisissez les langues.",
+  s2_t:'Relisez et ajustez', s2_d:'Nous traduisons par le sens et adaptons le dialecte ; vous modifiez et écoutez chaque phrase.',
+  s3_t:'Téléchargez', s3_d:'Une vidéo doublée et un fichier de sous-titres SRT par langue.',
+  ex_t:'Un exemple de la différence', ex_n:"Exemples textuels illustrant le style d'adaptation, pas des échantillons audio du service.",
+  ex_src:'Phrase source',
+  feat_t:'Pourquoi LuminDub', f1_t:'De vrais dialectes', f1_d:"Vocabulaire et exemples par dialecte, puis une seconde relecture qui remplace l'arabe standard.",
+  f2_t:'Vous gardez la main', f2_d:'Modifiez le texte, choisissez la voix et la vitesse, ajoutez votre glossaire.',
+  f3_t:'Sous-titres SRT', f3_d:'Un fichier de sous-titres prêt à l’emploi pour chaque langue.',
+  f4_t:'Gratuit et privé', f4_d:'Sans compte. Vos fichiers sont supprimés automatiquement après une heure.',
+  tool_t:'Lancer le doublage', c1_t:'1. La vidéo', drop_a:'Glissez la vidéo ici ou', drop_b:'cliquez pour choisir',
+  drop_h:"Jusqu'à 50 Mo et 3 minutes (MP4 / MOV / WebM)",
+  c2_t:'2. Langues et dialectes', gl_s:'Votre glossaire (facultatif)',
+  gl_h:'Une ligne par terme. Exemple : YouTube=يوتيوب, ou un nom de marque à garder tel quel.', gl_p:'LuminDub\ncourse=الكورس',
+  c3_t:'3. Voix et options', male:'Voix masculine', female:'Voix féminine',
+  rev_chk:"Je veux relire le texte, le modifier et écouter un aperçu avant le doublage (recommandé)",
+  con_chk:"Je confirme détenir les droits de cette vidéo ou avoir l'autorisation de la doubler, et ne pas utiliser l'outil pour usurper une identité ou tromper.",
+  go:'Démarrer', rev_t:'Relecture du texte', rev_h:'Modifiez chaque phrase à votre goût et appuyez sur ▶ pour l’écouter.',
+  voice:'Voix', speed:'Vitesse de parole (toutes les langues)', sp0:'Par défaut', sp1:'Beaucoup plus lent', sp2:'Plus lent', sp3:'Plus rapide', sp4:'Beaucoup plus rapide',
+  render:'Lancer le doublage avec ce texte', res_t:'Résultats', dl_v:'Télécharger la vidéo', dl_s:'Télécharger les sous-titres (SRT)', txt:'Texte traduit',
+  faq_t:'Questions fréquentes',
+  q1:'Le service est-il gratuit ?', a1:'Oui dans cette version de test, avec une limite quotidienne par visiteur.',
+  q2:'Ma voix est-elle clonée ?', a2:'Non. Nous utilisons des voix neuronales prêtes à l’emploi ; le clonage de voix est prévu plus tard.',
+  q3:'Quelles sont les limites ?', a3:"Jusqu'à 50 Mo et 3 minutes. La première requête peut prendre environ une minute après une période d'inactivité.",
+  q4:'Mes fichiers sont-ils conservés ?', a4:"Ils sont supprimés du serveur après une heure. Pour le traitement, l'audio et le texte sont envoyés à Groq, Google et Microsoft.",
+  q5:'Les lèvres sont-elles synchronisées ?', a5:'Pas encore. La synchronisation labiale est prévue.',
+  foot:'La version de test utilise des voix neuronales prêtes à l’emploi (pas le clonage de votre voix). Fichiers supprimés après une heure.',
+  uploading:'Envoi de la vidéo...', stopped:'Traitement interrompu', expired:'Tâche expirée (supprimée après une heure)',
+  big:'Fichier supérieur à 50 Mo', pick:'Choisissez au moins une langue', up_fail:"Échec de l'envoi", start_fail:'Échec du démarrage', prev_fail:"Aperçu indisponible",
+  n_rev:'Le texte est prêt à relire', n_done:'Doublage terminé ✅', preview:'Aperçu'
+},
+en: {
+  hero_h:'Dub your videos in real dialects, not textbook Arabic',
+  hero_p:'Upload one video and get dubbed versions in Moroccan Darija, Egyptian, Gulf Arabic, French and English. Review the text and hear a preview before you render.',
+  cta:'Try it now',
+  how_t:'How it works', s1_t:'Upload', s1_d:'A video up to 50 MB and 3 minutes, then pick your languages.',
+  s2_t:'Review and edit', s2_d:'We translate by meaning and adapt the dialect; you tweak and hear any line.',
+  s3_t:'Download', s3_d:'A dubbed video and an SRT subtitle file for every language.',
+  ex_t:'See the difference', ex_n:'Text examples of the adaptation style, not audio samples from the service.',
+  ex_src:'Source sentence',
+  feat_t:'Why LuminDub', f1_t:'Real dialects', f1_d:'Dialect-specific vocabulary and examples, plus a second pass that replaces standard Arabic.',
+  f2_t:'You stay in control', f2_d:'Edit the text, choose voice and speed, add your own glossary.',
+  f3_t:'SRT subtitles', f3_d:'A ready-to-use subtitle file for every language.',
+  f4_t:'Free and private', f4_d:'No account needed. Your files are deleted automatically after one hour.',
+  tool_t:'Start dubbing', c1_t:'1. Video', drop_a:'Drop your video here or', drop_b:'click to choose',
+  drop_h:'Up to 50 MB and 3 minutes (MP4 / MOV / WebM)',
+  c2_t:'2. Languages and dialects', gl_s:'Your glossary (optional)',
+  gl_h:'One term per line. Example: YouTube=يوتيوب, or a brand name to keep as is.', gl_p:'LuminDub\ncourse=الكورس',
+  c3_t:'3. Voice and options', male:'Male voice', female:'Female voice',
+  rev_chk:'I want to review and edit the text and hear a preview before dubbing (recommended)',
+  con_chk:'I confirm I own the rights to this video or have permission to dub it, and will not use the tool to impersonate or deceive.',
+  go:'Start', rev_t:'Review the text', rev_h:'Edit any line you like and press ▶ to hear it before continuing.',
+  voice:'Voice', speed:'Speaking speed (all languages)', sp0:'Default', sp1:'Much slower', sp2:'Slower', sp3:'Faster', sp4:'Much faster',
+  render:'Dub with this text', res_t:'Results', dl_v:'Download video', dl_s:'Download subtitles (SRT)', txt:'Translated text',
+  faq_t:'FAQ',
+  q1:'Is it free?', a1:'Yes in this test version, with a daily limit per visitor.',
+  q2:'Is my voice cloned?', a2:'No. We use ready-made neural voices; voice cloning is planned.',
+  q3:'What are the limits?', a3:'Up to 50 MB and 3 minutes. The first request can take about a minute after idle time.',
+  q4:'Are my files stored?', a4:'They are deleted from the server after one hour. For processing, audio and text are sent to Groq, Google and Microsoft.',
+  q5:'Is lip-sync included?', a5:'Not yet. Lip-sync is planned.',
+  foot:'The test version uses ready-made neural voices (not a clone of your voice). Files are deleted after one hour.',
+  uploading:'Uploading video...', stopped:'Processing stopped', expired:'Job expired (deleted after one hour)',
+  big:'File is larger than 50 MB', pick:'Pick at least one language', up_fail:'Upload failed', start_fail:'Could not start', prev_fail:'Preview unavailable',
+  n_rev:'Text is ready for review', n_done:'Dubbing finished ✅', preview:'Preview'
+}};
+
+const LABELS = {
+  darija:{ar:'الدارجة المغربية',fr:'Darija marocain',en:'Moroccan Darija'},
+  egyptian:{ar:'العامية المصرية',fr:'Arabe égyptien',en:'Egyptian Arabic'},
+  gulf:{ar:'اللهجة الخليجية',fr:'Arabe du Golfe',en:'Gulf Arabic'},
+  fr:{ar:'الفرنسية',fr:'Français',en:'French'},
+  en:{ar:'الإنجليزية',fr:'Anglais',en:'English'}
+};
+const EXAMPLES = [
+  {src:"Let's get started, it's very easy.", darija:'يالاه نبداو، ساهلة بزاف.', egyptian:'يلا نبدأ، سهلة أوي.', gulf:'يالله نبدأ، سهلة وايد.'},
+  {src:'What do you think?', darija:'شنو كتشوف؟', egyptian:'رأيك إيه؟', gulf:'شرايك؟'},
+  {src:'I want to show you something.', darija:'بغيت نوريك شي حاجة.', egyptian:'عايز أوريك حاجة.', gulf:'أبي أوريك شي.'}
+];
+const STEP_MAP = [
+  ['في قائمة الانتظار', {fr:"En file d'attente", en:'Queued'}],
+  ['استخراج الصوت', {fr:"Extraction de l'audio", en:'Extracting audio'}],
+  ['التعرف على الكلام', {fr:'Reconnaissance vocale', en:'Recognizing speech'}],
+  ['ترجمة وتكييف كل اللغات معاً', {fr:'Traduction et adaptation', en:'Translating and adapting'}],
+  ['توليد الصوت', {fr:'Génération de la voix', en:'Generating voice'}],
+  ['دمج الفيديو', {fr:'Montage de la vidéo', en:'Merging video'}],
+  ['اكتمل', {fr:'Terminé', en:'Done'}]
+];
+
 const $ = s => document.querySelector(s);
-const KEY = 'lumindub_job';
-let LANGS = {}, fileObj = null, jobId = null, reviewShown = false;
-const shown = new Set();
 const safe = fn => { try { return fn(); } catch (e) { return null; } };
+let UI = safe(() => localStorage.getItem('lumindub_ui')) || (navigator.language || 'ar').slice(0, 2);
+if (!I18N[UI]) UI = 'ar';
+const t = k => (I18N[UI] && I18N[UI][k]) || I18N.ar[k] || k;
+const lbl = k => (LABELS[k] && LABELS[k][UI]) || k;
+const stepText = s => {
+  if (UI === 'ar') return s;
+  for (const [ar, tr] of STEP_MAP) if (s.startsWith(ar)) {
+    const rest = s.slice(ar.length).replace(/^:\s*/, '');
+    return tr[UI] + (rest ? ' — ' + (Object.keys(LABELS).find(k => LABELS[k].ar === rest) ? lbl(Object.keys(LABELS).find(k => LABELS[k].ar === rest)) : rest) : '');
+  }
+  return s;
+};
+
+const KEY = 'lumindub_job';
+let LANGS = {}, fileObj = null, jobId = null, reviewShown = false, lastJob = null;
+const shown = new Set();
+
+function applyUI() {
+  document.documentElement.lang = UI;
+  document.documentElement.dir = UI === 'ar' ? 'rtl' : 'ltr';
+  $('#uiLang').value = UI;
+  document.querySelectorAll('[data-i18n]').forEach(e => { e.textContent = t(e.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(e => { e.placeholder = t(e.dataset.i18nPh); });
+  if (fileObj) setFileLabel(); else $('#dropText').innerHTML = `<span>${t('drop_a')}</span> <b>${t('drop_b')}</b><br><small>${t('drop_h')}</small>`;
+  document.title = 'LuminDub';
+  renderExamples(); renderChips();
+  if (lastJob) { $('#step').textContent = stepText(lastJob.step || ''); }
+}
+$('#uiLang').onchange = e => { UI = e.target.value; safe(() => localStorage.setItem('lumindub_ui', UI)); applyUI(); rebuildDynamic(); };
+
+function renderExamples() {
+  const box = $('#examples'); box.innerHTML = '';
+  EXAMPLES.forEach(x => {
+    const d = document.createElement('div'); d.className = 'ex';
+    const s = document.createElement('div'); s.className = 'src'; s.textContent = t('ex_src') + ': ' + x.src; d.appendChild(s);
+    ['darija', 'egyptian', 'gulf'].forEach(k => {
+      const o = document.createElement('div'); o.className = 'o';
+      const a = document.createElement('span'); a.textContent = lbl(k);
+      const b = document.createElement('span'); b.textContent = x[k]; o.append(a, b); d.appendChild(o);
+    });
+    box.appendChild(d);
+  });
+}
+
+function renderChips() {
+  const box = $('#langs');
+  const prev = new Set([...box.querySelectorAll('input:checked')].map(i => i.value));
+  const first = box.children.length === 0;
+  const keys = Object.keys(LANGS);
+  box.innerHTML = keys.map(k => {
+    const on = first ? ['darija', 'egyptian', 'gulf'].includes(k) : prev.has(k);
+    return `<label class="chip"><input type="checkbox" value="${k}" ${on ? 'checked' : ''}><span>${lbl(k)}</span></label>`;
+  }).join('');
+}
 
 fetch('/api/languages').then(r => r.json()).then(L => {
-  LANGS = L;
-  const on = ['darija', 'egyptian', 'gulf'];
-  $('#langs').innerHTML = Object.entries(L).map(([k, v]) =>
-    `<label class="chip"><input type="checkbox" value="${k}" ${on.includes(k) ? 'checked' : ''}><span>${v.label}</span></label>`).join('');
+  LANGS = L; renderChips();
   const saved = safe(() => localStorage.getItem(KEY));
   if (saved) { jobId = saved; $('#progress').classList.remove('hidden'); poll(); }
 });
@@ -139,26 +380,28 @@ drop.onclick = () => fileIn.click();
 ['dragleave', 'drop'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.remove('on'); }));
 drop.addEventListener('drop', ev => setFile(ev.dataTransfer.files[0]));
 fileIn.onchange = () => setFile(fileIn.files[0]);
+function setFileLabel() {
+  $('#dropText').innerHTML = '<b></b><br><small></small>';
+  $('#dropText b').textContent = fileObj.name;
+  $('#dropText small').textContent = (fileObj.size / 1048576).toFixed(1) + ' MB';
+}
 function setFile(f) {
   if (!f) return;
-  if (f.size > 50 * 1024 * 1024) { alert('الملف أكبر من 50MB'); return; }
-  fileObj = f;
-  $('#dropText').innerHTML = `<b></b><br><small>${(f.size / 1048576).toFixed(1)} MB</small>`;
-  $('#dropText b').textContent = f.name;
-  check();
+  if (f.size > 50 * 1024 * 1024) { alert(t('big')); return; }
+  fileObj = f; setFileLabel(); check();
 }
 function check() { $('#go').disabled = !(fileObj && $('#consent').checked); }
 $('#consent').onchange = check;
 
 function resetUI() {
-  shown.clear(); reviewShown = false;
+  shown.clear(); reviewShown = false; lastJob = null;
   $('#list').innerHTML = ''; $('#results').classList.add('hidden');
   $('#reviewCard').classList.add('hidden'); $('#perr').textContent = '';
 }
 
 $('#go').onclick = async () => {
   const langs = [...document.querySelectorAll('#langs input:checked')].map(i => i.value);
-  if (!langs.length) { alert('اختر لغة واحدة على الأقل'); return; }
+  if (!langs.length) { alert(t('pick')); return; }
   if ('Notification' in window && Notification.permission === 'default') safe(() => Notification.requestPermission());
   const fd = new FormData();
   fd.append('file', fileObj); fd.append('langs', langs.join(','));
@@ -168,10 +411,10 @@ $('#go').onclick = async () => {
   fd.append('glossary', $('#glossary').value);
   $('#go').disabled = true; resetUI();
   $('#progress').classList.remove('hidden');
-  $('#step').textContent = 'جارٍ رفع الفيديو...'; $('#fill').style.width = '2%';
+  $('#step').textContent = t('uploading'); $('#fill').style.width = '2%';
   try {
     const r = await fetch('/api/jobs', { method: 'POST', body: fd });
-    if (!r.ok) throw new Error((await r.json()).detail || 'فشل الرفع');
+    if (!r.ok) throw new Error((await r.json()).detail || t('up_fail'));
     jobId = (await r.json()).job_id;
     safe(() => localStorage.setItem(KEY, jobId));
     poll();
@@ -182,19 +425,20 @@ async function poll() {
   let j;
   try {
     const r = await fetch('/api/jobs/' + jobId);
-    if (r.status === 404) { stop('انتهت صلاحية المهمة (تُحذف بعد ساعة)'); return; }
+    if (r.status === 404) { stop(t('expired')); return; }
     j = await r.json();
-  } catch (e) { setTimeout(poll, 4000); return; }  // انقطاع مؤقت: نحاول مجدداً
+  } catch (e) { setTimeout(poll, 4000); return; }
+  lastJob = j;
 
   if (j.status === 'review') {
     $('#progress').classList.add('hidden');
-    if (!reviewShown) { buildReview(j); notify('النص جاهز للمراجعة'); }
+    if (!reviewShown) { buildReview(j); notify(t('n_rev')); }
     return;
   }
   $('#progress').classList.remove('hidden');
-  $('#step').textContent = j.step; $('#fill').style.width = j.progress + '%';
+  $('#step').textContent = stepText(j.step); $('#fill').style.width = j.progress + '%';
   renderResults(j.outputs || {});
-  if (j.status === 'done') { stop(); notify('اكتملت الدبلجة ✅'); return; }
+  if (j.status === 'done') { stop(); notify(t('n_done')); return; }
   if (j.status === 'error') { stop(j.error); return; }
   setTimeout(poll, 2500);
 }
@@ -202,7 +446,7 @@ async function poll() {
 function stop(msg) {
   safe(() => localStorage.removeItem(KEY));
   $('#go').disabled = !(fileObj && $('#consent').checked);
-  if (msg) { $('#perr').textContent = msg; $('#progress').classList.remove('hidden'); $('#step').textContent = 'توقفت العملية'; }
+  if (msg) { $('#perr').textContent = msg; $('#progress').classList.remove('hidden'); $('#step').textContent = t('stopped'); }
 }
 
 function notify(text) {
@@ -210,7 +454,7 @@ function notify(text) {
   if (document.hidden && 'Notification' in window && Notification.permission === 'granted') safe(() => new Notification('LuminDub', { body: text }));
 }
 
-/* ---------------- مراجعة النص ---------------- */
+/* -------- مراجعة النص -------- */
 let audio = null;
 function buildReview(j) {
   reviewShown = true;
@@ -218,23 +462,30 @@ function buildReview(j) {
   $('#reviewCard').classList.remove('hidden');
   $('#tabs').innerHTML = ''; $('#panels').innerHTML = '';
   keys.forEach((k, idx) => {
-    const t = document.createElement('button');
-    t.className = 'tab' + (idx === 0 ? ' on' : ''); t.textContent = LANGS[k].label; t.dataset.k = k;
-    t.onclick = () => showTab(k);
-    $('#tabs').appendChild(t);
+    const tab = document.createElement('button');
+    tab.className = 'tab' + (idx === 0 ? ' on' : ''); tab.textContent = lbl(k); tab.dataset.k = k;
+    tab.onclick = () => showTab(k);
+    $('#tabs').appendChild(tab);
 
-    const p = document.createElement('div'); p.id = 'p_' + k; p.dataset.panel = k;
+    const p = document.createElement('div'); p.dataset.panel = k;
     if (idx) p.classList.add('hidden');
     const ctl = document.createElement('div'); ctl.className = 'ctl';
-    ctl.innerHTML = `<div><label>الصوت</label><select id="v_${k}">${LANGS[k].voices.map(v =>
-      `<option value="${v.id}" ${v.gender === j.gender && !ctl.dataset.s ? (ctl.dataset.s = 1, 'selected') : ''}>${v.label}</option>`).join('')}</select></div>`;
-    p.appendChild(ctl);
+    const wrap = document.createElement('div');
+    const lb = document.createElement('label'); lb.textContent = t('voice'); lb.dataset.i18n = 'voice';
+    const sel = document.createElement('select'); sel.id = 'v_' + k;
+    let picked = false;
+    LANGS[k].voices.forEach(v => {
+      const o = document.createElement('option'); o.value = v.id; o.textContent = v.label;
+      if (!picked && v.gender === j.gender) { o.selected = true; picked = true; }
+      sel.appendChild(o);
+    });
+    wrap.append(lb, sel); ctl.appendChild(wrap); p.appendChild(ctl);
     d.texts[k].forEach((line, i) => {
       const seg = document.createElement('div'); seg.className = 'seg';
-      const src = document.createElement('div'); src.className = 'src'; src.textContent = d.segments[i].text;
+      const src = document.createElement('div'); src.className = 'src2'; src.textContent = d.segments[i].text;
       const ed = document.createElement('div'); ed.className = 'edit';
       const ta = document.createElement('textarea'); ta.dir = 'auto'; ta.value = line.text; ta.dataset.k = k;
-      const pb = document.createElement('button'); pb.className = 'play'; pb.textContent = '▶'; pb.title = 'معاينة';
+      const pb = document.createElement('button'); pb.className = 'play'; pb.textContent = '▶'; pb.title = t('preview');
       pb.onclick = () => preview(k, ta.value, pb);
       ed.append(ta, pb); seg.append(src, ed); p.appendChild(seg);
     });
@@ -242,7 +493,7 @@ function buildReview(j) {
   });
 }
 function showTab(k) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.k === k));
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x.dataset.k === k));
   document.querySelectorAll('[data-panel]').forEach(p => p.classList.toggle('hidden', p.dataset.panel !== k));
 }
 async function preview(k, text, btn) {
@@ -253,7 +504,7 @@ async function preview(k, text, btn) {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ lang: k, text, voice: $('#v_' + k).value, rate: $('#rate').value || undefined })
     });
-    if (!r.ok) throw new Error((await r.json()).detail || 'تعذّرت المعاينة');
+    if (!r.ok) throw new Error((await r.json()).detail || t('prev_fail'));
     if (audio) audio.pause();
     audio = new Audio((await r.json()).url); await audio.play();
   } catch (e) { alert(e.message); }
@@ -270,7 +521,7 @@ $('#renderBtn').onclick = async () => {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ texts, voices, rate: $('#rate').value || undefined })
     });
-    if (!r.ok) throw new Error((await r.json()).detail || 'فشل البدء');
+    if (!r.ok) throw new Error((await r.json()).detail || t('start_fail'));
     $('#reviewCard').classList.add('hidden'); reviewShown = true;
     $('#progress').classList.remove('hidden'); $('#fill').style.width = '1%';
     poll();
@@ -278,22 +529,34 @@ $('#renderBtn').onclick = async () => {
   $('#renderBtn').disabled = false;
 };
 
-/* ---------------- النتائج ---------------- */
+/* -------- النتائج -------- */
+let OUTPUTS = {};
 function renderResults(o) {
+  OUTPUTS = o;
   const keys = Object.keys(o); if (!keys.length) return;
   $('#results').classList.remove('hidden');
   keys.filter(k => !shown.has(k)).forEach(k => {
     shown.add(k);
-    const x = o[k], d = document.createElement('div'); d.className = 'res';
-    const b = document.createElement('b'); b.textContent = x.label;
+    const x = o[k], d = document.createElement('div'); d.className = 'res'; d.dataset.k = k;
+    const b = document.createElement('b'); b.className = 'rl'; b.textContent = lbl(k);
     const v = document.createElement('video'); v.controls = true; v.src = x.url; v.preload = 'metadata';
-    const a = document.createElement('a'); a.className = 'dl'; a.href = x.url; a.download = ''; a.textContent = 'تحميل الفيديو';
-    const s = document.createElement('a'); s.className = 'dl'; s.href = x.srt; s.download = ''; s.textContent = 'تحميل الترجمة (SRT)';
-    const det = document.createElement('details'); const sm = document.createElement('summary'); sm.textContent = 'النص المترجم';
+    const a = document.createElement('a'); a.className = 'dl'; a.href = x.url; a.download = ''; a.dataset.i18n = 'dl_v'; a.textContent = t('dl_v');
+    const s = document.createElement('a'); s.className = 'dl'; s.href = x.srt; s.download = ''; s.dataset.i18n = 'dl_s'; s.textContent = t('dl_s');
+    const det = document.createElement('details'); const sm = document.createElement('summary'); sm.dataset.i18n = 'txt'; sm.textContent = t('txt');
     const p = document.createElement('p'); p.textContent = x.text; det.append(sm, p);
     d.append(b, v, a, s, det); $('#list').appendChild(d);
   });
 }
+
+// يحدّث النصوص المبنية ديناميكياً عند تغيير لغة الواجهة
+function rebuildDynamic() {
+  document.querySelectorAll('.tab').forEach(x => { x.textContent = lbl(x.dataset.k); });
+  document.querySelectorAll('.res').forEach(r => { r.querySelector('.rl').textContent = lbl(r.dataset.k); });
+  document.querySelectorAll('.play').forEach(b => { b.title = t('preview'); });
+  document.querySelectorAll('#list [data-i18n], #panels [data-i18n]').forEach(e => { e.textContent = t(e.dataset.i18n); });
+}
+
+applyUI();
 </script>
 </body>
 </html>
