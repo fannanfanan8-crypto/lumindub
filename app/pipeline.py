@@ -15,6 +15,7 @@ from pydub.effects import normalize
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
+GEMINI_FALLBACK_MODEL = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-flash-lite-latest")
 
 # اللغات واللهجات المدعومة + أصوات Edge TTS المجانية.
 # examples: أمثلة تُظهر للنموذج الفرق بين اللهجة والفصحى (en -> target).
@@ -162,14 +163,14 @@ def transcribe(audio: Path) -> tuple[str, list[dict]]:
 
 # ---------------------------------------------------------------- Gemini
 
-def _gemini_json(prompt: str, temperature: float = 0.4):
-    """استدعاء Gemini وإرجاع JSON، مع إعادة المحاولة عند تجاوز الحد المجاني."""
+def _gemini_json(prompt: str, temperature: float = 0.4, retries: int = 4):
+    """استدعاء Gemini وإرجاع JSON.
+    عند الازدحام (503/500) أو حد الدقيقة (429) نعيد المحاولة ونبدّل بين النموذج الأساسي
+    والبديل. وإن استُنفدت الحصة اليومية لنموذج ننتقل للآخر."""
     if not GEMINI_API_KEY:
         raise RuntimeError("GEMINI_API_KEY غير مضبوط")
-    url = (
-        f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}"
-        ":generateContent"
-    )
+    models = [GEMINI_MODEL] + [m for m in (GEMINI_FALLBACK_MODEL,) if m and m != GEMINI_MODEL]
+    exhausted: set[str] = set()
     headers = {"x-goog-api-key": GEMINI_API_KEY}
     body = {
         "contents": [{"parts": [{"text": prompt}]}],
@@ -179,20 +180,35 @@ def _gemini_json(prompt: str, temperature: float = 0.4):
         },
     }
     last_err = "unknown"
-    for attempt in range(4):
+    for attempt in range(retries):
+        alive = [m for m in models if m not in exhausted]
+        if not alive:
+            break
+        model = alive[attempt % len(alive)]
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
         try:
             r = httpx.post(url, json=body, headers=headers, timeout=120)
             if r.status_code == 429:
-                last_err = "تجاوز حد الاستخدام المجاني لـ Gemini"
-                time.sleep(6 * (attempt + 1))
+                if "perday" in r.text.lower().replace(" ", "").replace("_", ""):
+                    exhausted.add(model)
+                    last_err = "انتهت حصة Gemini اليومية المجانية، جرّب غداً"
+                else:
+                    last_err = "تجاوز حد الدقيقة المجاني لـ Gemini"
+                    if attempt < retries - 1:
+                        time.sleep(10 * (attempt + 1))
+                continue
+            if r.status_code in (500, 502, 503, 504):
+                last_err = f"Gemini مزدحم مؤقتاً (HTTP {r.status_code})"
+                if attempt < retries - 1:
+                    time.sleep(3 * (attempt + 1))
                 continue
             r.raise_for_status()
             text = r.json()["candidates"][0]["content"]["parts"][0]["text"]
             return json.loads(text)
         except httpx.HTTPStatusError as e:
-            last_err = f"HTTP {e.response.status_code} من Gemini (النموذج: {GEMINI_MODEL})"
+            last_err = f"HTTP {e.response.status_code} من Gemini (النموذج: {model})"
             if e.response.status_code in (400, 401, 403, 404):
-                break
+                exhausted.add(model)
         except Exception as e:  # noqa: BLE001
             last_err = type(e).__name__
     raise RuntimeError(f"فشل الاتصال بـ Gemini: {last_err}")
@@ -263,7 +279,7 @@ def _refine_pass(lines: list[str], cfg: dict) -> list[tuple[str, str]]:
         "order as the input.\n\n"
         f"Input:\n{json.dumps(lines, ensure_ascii=False)}"
     )
-    out = _gemini_json(prompt, temperature=0.2)
+    out = _gemini_json(prompt, temperature=0.2, retries=1)
     if (
         not isinstance(out, list) or len(out) != len(lines)
         or not all(isinstance(o, dict) and o.get("text") for o in out)
@@ -276,6 +292,8 @@ def translate(segments: list[dict], lang_key: str, source_lang: str) -> list[str
     """ترجمة بالمعنى بلهجة الهدف ثم صقل لهجي وتهيئة للنطق. يرجع Line (نص + .tts)."""
     cfg = LANGUAGES[lang_key]
     draft = _translate_pass(segments, cfg, source_lang)
+    if not cfg["arabic"]:
+        return [Line(t) for t in draft]  # الفرنسية/الإنجليزية: طلب واحد يوفر الحصة
     try:
         refined = _refine_pass(draft, cfg)
         return [Line(t, s) for t, s in refined]
@@ -285,7 +303,7 @@ def translate(segments: list[dict], lang_key: str, source_lang: str) -> list[str
 
 def translate_many(segments: list[dict], langs: list[str], source_lang: str) -> dict:
     """يترجم كل اللغات بالتوازي (عمل شبكة فقط). يرجع {لغة: [Line]}."""
-    with ThreadPoolExecutor(max_workers=min(3, len(langs))) as ex:
+    with ThreadPoolExecutor(max_workers=min(2, len(langs))) as ex:
         futs = {k: ex.submit(translate, segments, k, source_lang) for k in langs}
         return {k: f.result() for k, f in futs.items()}
 
@@ -299,7 +317,7 @@ def _shorten(lines: list[str], cfg: dict, max_chars: list[int]) -> list[str]:
         "spoken tone. Return ONLY a JSON array of strings, same length and order.\n\n"
         f"Input:\n{json.dumps(items, ensure_ascii=False)}"
     )
-    out = _gemini_json(prompt, temperature=0.3)
+    out = _gemini_json(prompt, temperature=0.3, retries=1)
     if not isinstance(out, list) or len(out) != len(lines):
         raise ValueError("bad shorten output")
     return [str(x).strip() or l for x, l in zip(out, lines)]
