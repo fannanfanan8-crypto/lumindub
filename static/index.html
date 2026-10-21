@@ -18,24 +18,35 @@ h2{font-size:1.05rem;margin:0 0 12px}
 .drop{border:2px dashed var(--line);border-radius:12px;padding:28px;text-align:center;cursor:pointer;color:var(--mut);transition:.2s}
 .drop:hover,.drop.on{border-color:var(--acc);color:var(--txt)}
 .drop b{color:var(--txt)}
-.langs{display:flex;flex-wrap:wrap;gap:10px}
+.langs,.tabs{display:flex;flex-wrap:wrap;gap:10px}
 .chip{position:relative}
 .chip input{position:absolute;opacity:0}
-.chip span{display:block;padding:8px 16px;border:1px solid var(--line);border-radius:999px;cursor:pointer;color:var(--mut);transition:.15s}
-.chip input:checked+span{background:var(--acc);border-color:var(--acc);color:#fff}
+.chip span,.tab{display:block;padding:8px 16px;border:1px solid var(--line);border-radius:999px;cursor:pointer;color:var(--mut);transition:.15s;background:none;font:inherit}
+.chip input:checked+span,.tab.on{background:var(--acc);border-color:var(--acc);color:#fff}
 .row{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
 label.inline{display:flex;gap:6px;align-items:center;cursor:pointer;color:var(--mut)}
-.consent{display:flex;gap:10px;align-items:flex-start;font-size:.9rem;color:var(--mut);cursor:pointer}
-button{width:100%;margin-top:16px;padding:14px;border:0;border-radius:12px;font:inherit;font-weight:700;font-size:1.05rem;color:#fff;cursor:pointer;background:linear-gradient(90deg,var(--acc),var(--acc2))}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:.9rem;color:var(--mut);cursor:pointer;margin-top:14px}
+button.main{width:100%;margin-top:16px;padding:14px;border:0;border-radius:12px;font:inherit;font-weight:700;font-size:1.05rem;color:#fff;cursor:pointer;background:linear-gradient(90deg,var(--acc),var(--acc2))}
 button:disabled{opacity:.5;cursor:not-allowed}
 .bar{height:10px;background:var(--line);border-radius:99px;overflow:hidden;margin:10px 0}
 .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .4s}
 .err{color:var(--err)}
+.hint{color:var(--mut);font-size:.85rem;margin:0 0 12px}
+select,textarea{width:100%;background:#10132a;color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit}
+textarea{resize:vertical;min-height:62px}
+details{color:var(--mut);font-size:.9rem;margin-top:14px}
+details summary{cursor:pointer}
+.ctl{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.ctl label{font-size:.82rem;color:var(--mut);display:block;margin-bottom:4px}
+.seg{border-top:1px solid var(--line);padding:12px 0}
+.seg:first-of-type{border:0}
+.src{font-size:.82rem;color:var(--mut);margin-bottom:6px;direction:auto}
+.edit{display:flex;gap:8px;align-items:flex-start}
+.play{flex:none;width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:#10132a;color:var(--acc2);font-size:1.1rem;cursor:pointer}
 .res{border-top:1px solid var(--line);padding-top:14px;margin-top:14px}
 .res:first-of-type{border:0;padding:0;margin:0}
 video{width:100%;border-radius:10px;background:#000;margin:8px 0}
-a.dl{color:var(--acc2);text-decoration:none;font-weight:600}
-details{color:var(--mut);font-size:.9rem}
+a.dl{color:var(--acc2);text-decoration:none;font-weight:600;margin-inline-end:16px}
 .hidden{display:none}
 .note{font-size:.82rem;color:var(--mut);text-align:center;margin-top:24px}
 </style>
@@ -47,36 +58,58 @@ details{color:var(--mut);font-size:.9rem}
     <p class="sub">ارفع فيديو واحداً واحصل على نسخ مدبلجة بالدارجة المغربية والمصرية والخليجية والفرنسية والإنجليزية</p>
   </header>
 
-  <div class="card">
-    <h2>1. الفيديو</h2>
-    <div class="drop" id="drop">
-      <div id="dropText">اسحب الفيديو هنا أو <b>اضغط للاختيار</b><br><small>حتى 50MB ودقيقتين إلى ثلاث دقائق (MP4 / MOV / WebM)</small></div>
-      <input type="file" id="file" accept="video/*" class="hidden">
+  <div id="setup">
+    <div class="card">
+      <h2>1. الفيديو</h2>
+      <div class="drop" id="drop">
+        <div id="dropText">اسحب الفيديو هنا أو <b>اضغط للاختيار</b><br><small>حتى 50MB وثلاث دقائق (MP4 / MOV / WebM)</small></div>
+        <input type="file" id="file" accept="video/*" class="hidden">
+      </div>
     </div>
-  </div>
 
-  <div class="card">
-    <h2>2. اللغات واللهجات</h2>
-    <div class="langs" id="langs"></div>
-  </div>
-
-  <div class="card">
-    <h2>3. نوع الصوت</h2>
-    <div class="row">
-      <label class="inline"><input type="radio" name="g" value="male" checked> صوت رجالي</label>
-      <label class="inline"><input type="radio" name="g" value="female"> صوت نسائي</label>
+    <div class="card">
+      <h2>2. اللغات واللهجات</h2>
+      <div class="langs" id="langs"></div>
+      <details>
+        <summary>قاموس مصطلحاتك (اختياري)</summary>
+        <p class="hint">سطر لكل مصطلح. مثال: <code>YouTube=يوتيوب</code> أو اسم علامة تريد إبقاءه كما هو.</p>
+        <textarea id="glossary" placeholder="LuminDub&#10;course=الكورس"></textarea>
+      </details>
     </div>
-    <label class="consent" style="margin-top:16px">
-      <input type="checkbox" id="consent">
-      <span>أقر بأنني أملك حقوق هذا الفيديو، أو لدي إذن بدبلجته، وبأنني لن أستخدم الأداة لانتحال شخصية أو التضليل.</span>
-    </label>
-    <button id="go" disabled>ابدأ الدبلجة</button>
+
+    <div class="card">
+      <h2>3. الصوت والخيارات</h2>
+      <div class="row">
+        <label class="inline"><input type="radio" name="g" value="male" checked> صوت رجالي</label>
+        <label class="inline"><input type="radio" name="g" value="female"> صوت نسائي</label>
+      </div>
+      <label class="check"><input type="checkbox" id="review" checked>
+        <span>أريد مراجعة النص وتعديله وسماع معاينة قبل الدبلجة (موصى به، يحسّن اللهجة)</span></label>
+      <label class="check"><input type="checkbox" id="consent">
+        <span>أقر بأنني أملك حقوق هذا الفيديو، أو لدي إذن بدبلجته، وبأنني لن أستخدم الأداة لانتحال شخصية أو التضليل.</span></label>
+      <button class="main" id="go" disabled>ابدأ</button>
+    </div>
   </div>
 
   <div class="card hidden" id="progress">
     <h2 id="step">جارٍ التجهيز...</h2>
     <div class="bar"><i id="fill"></i></div>
     <div id="perr" class="err"></div>
+  </div>
+
+  <div class="card hidden" id="reviewCard">
+    <h2>مراجعة النص</h2>
+    <p class="hint">عدّل أي جملة بما يناسبك، واضغط ▶ لسماع الجملة قبل المتابعة.</p>
+    <div class="tabs" id="tabs"></div>
+    <div id="panels"></div>
+    <div class="ctl">
+      <div><label>سرعة الكلام (كل اللغات)</label>
+        <select id="rate">
+          <option value="">افتراضية</option><option value="-15%">أبطأ كثيراً</option>
+          <option value="-8%">أبطأ</option><option value="+8%">أسرع</option><option value="+15%">أسرع كثيراً</option>
+        </select></div>
+    </div>
+    <button class="main" id="renderBtn">ابدأ الدبلجة بهذا النص</button>
   </div>
 
   <div class="card hidden" id="results"><h2>النتائج</h2><div id="list"></div></div>
@@ -86,67 +119,179 @@ details{color:var(--mut);font-size:.9rem}
 
 <script>
 const $ = s => document.querySelector(s);
-const defaults = ['darija','egyptian','gulf','fr','en'];
-let fileObj = null;
+const KEY = 'lumindub_job';
+let LANGS = {}, fileObj = null, jobId = null, reviewShown = false;
+const shown = new Set();
+const safe = fn => { try { return fn(); } catch (e) { return null; } };
 
-fetch('/api/languages').then(r=>r.json()).then(L=>{
-  $('#langs').innerHTML = Object.entries(L).map(([k,v])=>
-    `<label class="chip"><input type="checkbox" value="${k}" ${defaults.includes(k)&&k!=='en'?'checked':''}><span>${v}</span></label>`).join('');
+fetch('/api/languages').then(r => r.json()).then(L => {
+  LANGS = L;
+  const on = ['darija', 'egyptian', 'gulf'];
+  $('#langs').innerHTML = Object.entries(L).map(([k, v]) =>
+    `<label class="chip"><input type="checkbox" value="${k}" ${on.includes(k) ? 'checked' : ''}><span>${v.label}</span></label>`).join('');
+  const saved = safe(() => localStorage.getItem(KEY));
+  if (saved) { jobId = saved; $('#progress').classList.remove('hidden'); poll(); }
 });
 
-const drop=$('#drop'), fileIn=$('#file');
-drop.onclick=()=>fileIn.click();
-['dragover','dragenter'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.add('on')}));
-['dragleave','drop'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.remove('on')}));
-drop.addEventListener('drop',ev=>setFile(ev.dataTransfer.files[0]));
-fileIn.onchange=()=>setFile(fileIn.files[0]);
-function setFile(f){
-  if(!f) return;
-  if(f.size>50*1024*1024){alert('الملف أكبر من 50MB');return}
-  fileObj=f; $('#dropText').innerHTML=`<b>${f.name}</b><br><small>${(f.size/1048576).toFixed(1)} MB</small>`; check();
+const drop = $('#drop'), fileIn = $('#file');
+drop.onclick = () => fileIn.click();
+['dragover', 'dragenter'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add('on'); }));
+['dragleave', 'drop'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.remove('on'); }));
+drop.addEventListener('drop', ev => setFile(ev.dataTransfer.files[0]));
+fileIn.onchange = () => setFile(fileIn.files[0]);
+function setFile(f) {
+  if (!f) return;
+  if (f.size > 50 * 1024 * 1024) { alert('الملف أكبر من 50MB'); return; }
+  fileObj = f;
+  $('#dropText').innerHTML = `<b></b><br><small>${(f.size / 1048576).toFixed(1)} MB</small>`;
+  $('#dropText b').textContent = f.name;
+  check();
 }
-function check(){ $('#go').disabled = !(fileObj && $('#consent').checked); }
-$('#consent').onchange=check;
+function check() { $('#go').disabled = !(fileObj && $('#consent').checked); }
+$('#consent').onchange = check;
 
-$('#go').onclick=async()=>{
-  const langs=[...document.querySelectorAll('#langs input:checked')].map(i=>i.value);
-  if(!langs.length){alert('اختر لغة واحدة على الأقل');return}
-  const fd=new FormData();
-  fd.append('file',fileObj); fd.append('langs',langs.join(','));
-  fd.append('gender',document.querySelector('input[name=g]:checked').value);
-  fd.append('consent',$('#consent').checked);
-  $('#go').disabled=true; $('#progress').classList.remove('hidden');
-  $('#results').classList.add('hidden'); $('#list').innerHTML=''; $('#perr').textContent='';
-  $('#step').textContent='جارٍ رفع الفيديو...'; $('#fill').style.width='2%';
-  try{
-    const r=await fetch('/api/jobs',{method:'POST',body:fd});
-    if(!r.ok) throw new Error((await r.json()).detail||'فشل الرفع');
-    poll((await r.json()).job_id);
-  }catch(e){ $('#perr').textContent=e.message; $('#go').disabled=false; }
+function resetUI() {
+  shown.clear(); reviewShown = false;
+  $('#list').innerHTML = ''; $('#results').classList.add('hidden');
+  $('#reviewCard').classList.add('hidden'); $('#perr').textContent = '';
+}
+
+$('#go').onclick = async () => {
+  const langs = [...document.querySelectorAll('#langs input:checked')].map(i => i.value);
+  if (!langs.length) { alert('اختر لغة واحدة على الأقل'); return; }
+  if ('Notification' in window && Notification.permission === 'default') safe(() => Notification.requestPermission());
+  const fd = new FormData();
+  fd.append('file', fileObj); fd.append('langs', langs.join(','));
+  fd.append('gender', document.querySelector('input[name=g]:checked').value);
+  fd.append('consent', $('#consent').checked);
+  fd.append('review', $('#review').checked);
+  fd.append('glossary', $('#glossary').value);
+  $('#go').disabled = true; resetUI();
+  $('#progress').classList.remove('hidden');
+  $('#step').textContent = 'جارٍ رفع الفيديو...'; $('#fill').style.width = '2%';
+  try {
+    const r = await fetch('/api/jobs', { method: 'POST', body: fd });
+    if (!r.ok) throw new Error((await r.json()).detail || 'فشل الرفع');
+    jobId = (await r.json()).job_id;
+    safe(() => localStorage.setItem(KEY, jobId));
+    poll();
+  } catch (e) { $('#perr').textContent = e.message; $('#go').disabled = false; }
 };
 
-async function poll(id){
-  const r=await fetch('/api/jobs/'+id);
-  if(!r.ok){ $('#perr').textContent='انتهت صلاحية المهمة'; $('#go').disabled=false; return }
-  const j=await r.json();
-  $('#step').textContent=j.step; $('#fill').style.width=j.progress+'%';
-  render(j.outputs);
-  if(j.status==='done'){ $('#go').disabled=false; return }
-  if(j.status==='error'){ $('#perr').textContent=j.error; $('#go').disabled=false; return }
-  setTimeout(()=>poll(id),2500);
+async function poll() {
+  let j;
+  try {
+    const r = await fetch('/api/jobs/' + jobId);
+    if (r.status === 404) { stop('انتهت صلاحية المهمة (تُحذف بعد ساعة)'); return; }
+    j = await r.json();
+  } catch (e) { setTimeout(poll, 4000); return; }  // انقطاع مؤقت: نحاول مجدداً
+
+  if (j.status === 'review') {
+    $('#progress').classList.add('hidden');
+    if (!reviewShown) { buildReview(j); notify('النص جاهز للمراجعة'); }
+    return;
+  }
+  $('#progress').classList.remove('hidden');
+  $('#step').textContent = j.step; $('#fill').style.width = j.progress + '%';
+  renderResults(j.outputs || {});
+  if (j.status === 'done') { stop(); notify('اكتملت الدبلجة ✅'); return; }
+  if (j.status === 'error') { stop(j.error); return; }
+  setTimeout(poll, 2500);
 }
 
-const shown=new Set();
-function render(o){
-  const keys=Object.keys(o); if(!keys.length) return;
+function stop(msg) {
+  safe(() => localStorage.removeItem(KEY));
+  $('#go').disabled = !(fileObj && $('#consent').checked);
+  if (msg) { $('#perr').textContent = msg; $('#progress').classList.remove('hidden'); $('#step').textContent = 'توقفت العملية'; }
+}
+
+function notify(text) {
+  document.title = text + ' - LuminDub';
+  if (document.hidden && 'Notification' in window && Notification.permission === 'granted') safe(() => new Notification('LuminDub', { body: text }));
+}
+
+/* ---------------- مراجعة النص ---------------- */
+let audio = null;
+function buildReview(j) {
+  reviewShown = true;
+  const d = j.draft, keys = j.langs;
+  $('#reviewCard').classList.remove('hidden');
+  $('#tabs').innerHTML = ''; $('#panels').innerHTML = '';
+  keys.forEach((k, idx) => {
+    const t = document.createElement('button');
+    t.className = 'tab' + (idx === 0 ? ' on' : ''); t.textContent = LANGS[k].label; t.dataset.k = k;
+    t.onclick = () => showTab(k);
+    $('#tabs').appendChild(t);
+
+    const p = document.createElement('div'); p.id = 'p_' + k; p.dataset.panel = k;
+    if (idx) p.classList.add('hidden');
+    const ctl = document.createElement('div'); ctl.className = 'ctl';
+    ctl.innerHTML = `<div><label>الصوت</label><select id="v_${k}">${LANGS[k].voices.map(v =>
+      `<option value="${v.id}" ${v.gender === j.gender && !ctl.dataset.s ? (ctl.dataset.s = 1, 'selected') : ''}>${v.label}</option>`).join('')}</select></div>`;
+    p.appendChild(ctl);
+    d.texts[k].forEach((line, i) => {
+      const seg = document.createElement('div'); seg.className = 'seg';
+      const src = document.createElement('div'); src.className = 'src'; src.textContent = d.segments[i].text;
+      const ed = document.createElement('div'); ed.className = 'edit';
+      const ta = document.createElement('textarea'); ta.dir = 'auto'; ta.value = line.text; ta.dataset.k = k;
+      const pb = document.createElement('button'); pb.className = 'play'; pb.textContent = '▶'; pb.title = 'معاينة';
+      pb.onclick = () => preview(k, ta.value, pb);
+      ed.append(ta, pb); seg.append(src, ed); p.appendChild(seg);
+    });
+    $('#panels').appendChild(p);
+  });
+}
+function showTab(k) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.k === k));
+  document.querySelectorAll('[data-panel]').forEach(p => p.classList.toggle('hidden', p.dataset.panel !== k));
+}
+async function preview(k, text, btn) {
+  if (!text.trim()) return;
+  btn.disabled = true; btn.textContent = '…';
+  try {
+    const r = await fetch(`/api/jobs/${jobId}/preview`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lang: k, text, voice: $('#v_' + k).value, rate: $('#rate').value || undefined })
+    });
+    if (!r.ok) throw new Error((await r.json()).detail || 'تعذّرت المعاينة');
+    if (audio) audio.pause();
+    audio = new Audio((await r.json()).url); await audio.play();
+  } catch (e) { alert(e.message); }
+  btn.disabled = false; btn.textContent = '▶';
+}
+
+$('#renderBtn').onclick = async () => {
+  const texts = {}, voices = {};
+  document.querySelectorAll('#panels textarea').forEach(ta => { (texts[ta.dataset.k] ||= []).push(ta.value); });
+  Object.keys(texts).forEach(k => voices[k] = $('#v_' + k).value);
+  $('#renderBtn').disabled = true;
+  try {
+    const r = await fetch(`/api/jobs/${jobId}/render`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ texts, voices, rate: $('#rate').value || undefined })
+    });
+    if (!r.ok) throw new Error((await r.json()).detail || 'فشل البدء');
+    $('#reviewCard').classList.add('hidden'); reviewShown = true;
+    $('#progress').classList.remove('hidden'); $('#fill').style.width = '1%';
+    poll();
+  } catch (e) { alert(e.message); }
+  $('#renderBtn').disabled = false;
+};
+
+/* ---------------- النتائج ---------------- */
+function renderResults(o) {
+  const keys = Object.keys(o); if (!keys.length) return;
   $('#results').classList.remove('hidden');
-  keys.filter(k=>!shown.has(k)).forEach(k=>{
+  keys.filter(k => !shown.has(k)).forEach(k => {
     shown.add(k);
-    const x=o[k], d=document.createElement('div'); d.className='res';
-    d.innerHTML=`<b>${x.label}</b><video controls src="${x.url}"></video>
-      <a class="dl" href="${x.url}" download>تحميل الفيديو</a>
-      <details><summary>النص المترجم</summary><p>${x.text.replace(/</g,'&lt;')}</p></details>`;
-    $('#list').appendChild(d);
+    const x = o[k], d = document.createElement('div'); d.className = 'res';
+    const b = document.createElement('b'); b.textContent = x.label;
+    const v = document.createElement('video'); v.controls = true; v.src = x.url; v.preload = 'metadata';
+    const a = document.createElement('a'); a.className = 'dl'; a.href = x.url; a.download = ''; a.textContent = 'تحميل الفيديو';
+    const s = document.createElement('a'); s.className = 'dl'; s.href = x.srt; s.download = ''; s.textContent = 'تحميل الترجمة (SRT)';
+    const det = document.createElement('details'); const sm = document.createElement('summary'); sm.textContent = 'النص المترجم';
+    const p = document.createElement('p'); p.textContent = x.text; det.append(sm, p);
+    d.append(b, v, a, s, det); $('#list').appendChild(d);
   });
 }
 </script>
