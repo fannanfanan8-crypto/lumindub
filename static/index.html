@@ -70,6 +70,8 @@ details summary{cursor:pointer}
 .res:first-of-type{border:0;padding:0;margin:0}
 video{width:100%;border-radius:10px;background:#000;margin:8px 0}
 a.dl{color:var(--acc2);text-decoration:none;font-weight:600;margin-inline-end:16px}
+.badge{margin-inline-start:10px;font-size:.8rem;color:var(--ok)}
+.lsbox{margin:6px 0 10px;padding:10px 12px;border:1px dashed var(--line);border-radius:10px}
 .hidden{display:none}
 .note{font-size:.82rem;color:var(--mut);text-align:center;margin-top:28px}
 </style>
@@ -213,8 +215,9 @@ ar: {
   q1:'هل الخدمة مجانية؟', a1:'نعم في هذه النسخة التجريبية، مع حد يومي لكل زائر.',
   q2:'هل يُستنسخ صوتي؟', a2:'لا. نستخدم أصواتاً عصبية جاهزة، واستنساخ الصوت ميزة قادمة.',
   q3:'ما حدود الفيديو؟', a3:'حتى 50MB وثلاث دقائق. وقد يتأخر أول طلب نحو دقيقة بعد فترة خمول.',
-  q4:'هل تُحفظ ملفاتي؟', a4:'تُحذف من الخادم بعد ساعة. ولأجل المعالجة يُرسل الصوت والنص إلى خدمات Groq وGoogle وMicrosoft.',
-  q5:'هل تتطابق حركة الشفاه؟', a5:'ليس بعد. مطابقة الشفاه ميزة مستقبلية.',
+  q4:'هل تُحفظ ملفاتي؟', a4:'تُحذف من الخادم بعد ساعة. ولأجل المعالجة يُرسل الصوت والنص إلى خدمات Groq وGoogle وMicrosoft، والفيديو إلى Sync.so إن اخترت مطابقة الشفاه.',
+  q5:'هل تتطابق حركة الشفاه؟', a5:'نعم، اختيارياً وبشكل تجريبي عبر خدمة Sync.so، ولفيديوهات قصيرة (حتى 20 ثانية). تعمل أفضل مع وجه واحد أمامي.',
+  ls_chk:'مطابقة حركة الشفاه لهذه اللغة (تجريبي)', ls_hint:'يُرسل الفيديو والصوت إلى خدمة Sync.so. الحد {s} ثانية، وتحتاج دقائق إضافية. إن فشلت تحصل على النسخة العادية.', ls_long:'فيديوك أطول من {s} ثانية، فلا تتوفر مطابقة الشفاه له.', ls_badge:'بمطابقة الشفاه ✓',
   foot:'النسخة التجريبية تستخدم أصواتاً عصبية جاهزة (وليس استنساخ صوتك). الملفات تُحذف بعد ساعة.',
   uploading:'جارٍ رفع الفيديو...', stopped:'توقفت العملية', expired:'انتهت صلاحية المهمة (تُحذف بعد ساعة)',
   big:'الملف أكبر من 50MB', pick:'اختر لغة واحدة على الأقل', up_fail:'فشل الرفع', start_fail:'فشل البدء', prev_fail:'تعذّرت المعاينة',
@@ -247,8 +250,9 @@ fr: {
   q1:'Le service est-il gratuit ?', a1:'Oui dans cette version de test, avec une limite quotidienne par visiteur.',
   q2:'Ma voix est-elle clonée ?', a2:'Non. Nous utilisons des voix neuronales prêtes à l’emploi ; le clonage de voix est prévu plus tard.',
   q3:'Quelles sont les limites ?', a3:"Jusqu'à 50 Mo et 3 minutes. La première requête peut prendre environ une minute après une période d'inactivité.",
-  q4:'Mes fichiers sont-ils conservés ?', a4:"Ils sont supprimés du serveur après une heure. Pour le traitement, l'audio et le texte sont envoyés à Groq, Google et Microsoft.",
-  q5:'Les lèvres sont-elles synchronisées ?', a5:'Pas encore. La synchronisation labiale est prévue.',
+  q4:'Mes fichiers sont-ils conservés ?', a4:"Ils sont supprimés du serveur après une heure. Pour le traitement, l'audio et le texte sont envoyés à Groq, Google et Microsoft, et la vidéo à Sync.so si vous choisissez la synchronisation labiale.",
+  q5:'Les lèvres sont-elles synchronisées ?', a5:'Oui, en option et à titre expérimental via Sync.so, pour de courtes vidéos (20 secondes max). Meilleur résultat avec un seul visage de face.',
+  ls_chk:'Synchroniser les lèvres pour cette langue (expérimental)', ls_hint:'La vidéo et l’audio sont envoyés à Sync.so. Limite : {s} secondes, quelques minutes de plus. En cas d’échec, vous recevez la version normale.', ls_long:'Votre vidéo dépasse {s} secondes : la synchronisation labiale n’est pas disponible.', ls_badge:'Lèvres synchronisées ✓',
   foot:'La version de test utilise des voix neuronales prêtes à l’emploi (pas le clonage de votre voix). Fichiers supprimés après une heure.',
   uploading:'Envoi de la vidéo...', stopped:'Traitement interrompu', expired:'Tâche expirée (supprimée après une heure)',
   big:'Fichier supérieur à 50 Mo', pick:'Choisissez au moins une langue', up_fail:"Échec de l'envoi", start_fail:'Échec du démarrage', prev_fail:"Aperçu indisponible",
@@ -281,8 +285,9 @@ en: {
   q1:'Is it free?', a1:'Yes in this test version, with a daily limit per visitor.',
   q2:'Is my voice cloned?', a2:'No. We use ready-made neural voices; voice cloning is planned.',
   q3:'What are the limits?', a3:'Up to 50 MB and 3 minutes. The first request can take about a minute after idle time.',
-  q4:'Are my files stored?', a4:'They are deleted from the server after one hour. For processing, audio and text are sent to Groq, Google and Microsoft.',
-  q5:'Is lip-sync included?', a5:'Not yet. Lip-sync is planned.',
+  q4:'Are my files stored?', a4:'They are deleted from the server after one hour. For processing, audio and text are sent to Groq, Google and Microsoft, and the video to Sync.so if you choose lip-sync.',
+  q5:'Is lip-sync included?', a5:'Yes, as an optional experimental feature via Sync.so, for short videos (up to 20 seconds). Works best with a single front-facing face.',
+  ls_chk:'Lip-sync this language (experimental)', ls_hint:'The video and audio are sent to Sync.so. Limit: {s} seconds, a few extra minutes. If it fails you get the normal version.', ls_long:'Your video is longer than {s} seconds, so lip-sync is not available for it.', ls_badge:'Lip-synced ✓',
   foot:'The test version uses ready-made neural voices (not a clone of your voice). Files are deleted after one hour.',
   uploading:'Uploading video...', stopped:'Processing stopped', expired:'Job expired (deleted after one hour)',
   big:'File is larger than 50 MB', pick:'Pick at least one language', up_fail:'Upload failed', start_fail:'Could not start', prev_fail:'Preview unavailable',
@@ -308,6 +313,7 @@ const STEP_MAP = [
   ['ترجمة وتكييف كل اللغات معاً', {fr:'Traduction et adaptation', en:'Translating and adapting'}],
   ['توليد الصوت', {fr:'Génération de la voix', en:'Generating voice'}],
   ['دمج الفيديو', {fr:'Montage de la vidéo', en:'Merging video'}],
+  ['مطابقة الشفاه', {fr:'Synchronisation labiale', en:'Lip-syncing'}],
   ['اكتمل', {fr:'Terminé', en:'Done'}]
 ];
 
@@ -395,6 +401,7 @@ $('#consent').onchange = check;
 
 function resetUI() {
   shown.clear(); reviewShown = false; lastJob = null;
+  Object.keys(RES).forEach(k => delete RES[k]);
   $('#list').innerHTML = ''; $('#results').classList.add('hidden');
   $('#reviewCard').classList.add('hidden'); $('#perr').textContent = '';
 }
@@ -480,6 +487,23 @@ function buildReview(j) {
       sel.appendChild(o);
     });
     wrap.append(lb, sel); ctl.appendChild(wrap); p.appendChild(ctl);
+    const ls = d.lipsync || {};
+    if (ls.enabled) {
+      const box = document.createElement('div'); box.className = 'lsbox';
+      if (ls.duration <= ls.max_seconds) {
+        const lab = document.createElement('label'); lab.className = 'check'; lab.style.marginTop = '0';
+        const cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'ls_' + k; cb.dataset.ls = k;
+        const sp = document.createElement('span'); sp.dataset.i18n = 'ls_chk'; sp.textContent = t('ls_chk');
+        lab.append(cb, sp);
+        const h = document.createElement('p'); h.className = 'hint'; h.dataset.i18n = 'ls_hint'; h.dataset.n = ls.max_seconds;
+        h.textContent = t('ls_hint').replace('{s}', ls.max_seconds);
+        box.append(lab, h);
+      } else {
+        const h = document.createElement('p'); h.className = 'hint'; h.dataset.i18n = 'ls_long'; h.dataset.n = ls.max_seconds;
+        h.textContent = t('ls_long').replace('{s}', ls.max_seconds); box.append(h);
+      }
+      p.appendChild(box);
+    }
     d.texts[k].forEach((line, i) => {
       const seg = document.createElement('div'); seg.className = 'seg';
       const src = document.createElement('div'); src.className = 'src2'; src.textContent = d.segments[i].text;
@@ -519,7 +543,8 @@ $('#renderBtn').onclick = async () => {
   try {
     const r = await fetch(`/api/jobs/${jobId}/render`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ texts, voices, rate: $('#rate').value || undefined })
+      body: JSON.stringify({ texts, voices, rate: $('#rate').value || undefined,
+        lipsync: [...document.querySelectorAll('#panels input[data-ls]:checked')].map(x => x.dataset.ls) })
     });
     if (!r.ok) throw new Error((await r.json()).detail || t('start_fail'));
     $('#reviewCard').classList.add('hidden'); reviewShown = true;
@@ -531,20 +556,33 @@ $('#renderBtn').onclick = async () => {
 
 /* -------- النتائج -------- */
 let OUTPUTS = {};
+const RES = {};
 function renderResults(o) {
   OUTPUTS = o;
   const keys = Object.keys(o); if (!keys.length) return;
   $('#results').classList.remove('hidden');
-  keys.filter(k => !shown.has(k)).forEach(k => {
+  keys.forEach(k => {
+    const x = o[k];
+    if (shown.has(k)) {  // تحديث عنصر موجود (مثلاً بعد اكتمال مطابقة الشفاه)
+      const r = RES[k];
+      if (r.url !== x.url) { r.url = x.url; r.v.src = x.url; r.a.href = x.url; }
+      if (x.lipsync && !r.badge.textContent) r.badge.textContent = t('ls_badge');
+      if (x.note) r.note.textContent = x.note;
+      return;
+    }
     shown.add(k);
-    const x = o[k], d = document.createElement('div'); d.className = 'res'; d.dataset.k = k;
+    const d = document.createElement('div'); d.className = 'res'; d.dataset.k = k;
     const b = document.createElement('b'); b.className = 'rl'; b.textContent = lbl(k);
+    const badge = document.createElement('span'); badge.className = 'badge';
+    if (x.lipsync) badge.textContent = t('ls_badge');
+    const note = document.createElement('p'); note.className = 'hint err'; note.textContent = x.note || '';
     const v = document.createElement('video'); v.controls = true; v.src = x.url; v.preload = 'metadata';
     const a = document.createElement('a'); a.className = 'dl'; a.href = x.url; a.download = ''; a.dataset.i18n = 'dl_v'; a.textContent = t('dl_v');
-    const s = document.createElement('a'); s.className = 'dl'; s.href = x.srt; s.download = ''; s.dataset.i18n = 'dl_s'; s.textContent = t('dl_s');
+    const s2 = document.createElement('a'); s2.className = 'dl'; s2.href = x.srt; s2.download = ''; s2.dataset.i18n = 'dl_s'; s2.textContent = t('dl_s');
     const det = document.createElement('details'); const sm = document.createElement('summary'); sm.dataset.i18n = 'txt'; sm.textContent = t('txt');
     const p = document.createElement('p'); p.textContent = x.text; det.append(sm, p);
-    d.append(b, v, a, s, det); $('#list').appendChild(d);
+    d.append(b, badge, note, v, a, s2, det); $('#list').appendChild(d);
+    RES[k] = { url: x.url, v, a, badge, note };
   });
 }
 
@@ -553,7 +591,11 @@ function rebuildDynamic() {
   document.querySelectorAll('.tab').forEach(x => { x.textContent = lbl(x.dataset.k); });
   document.querySelectorAll('.res').forEach(r => { r.querySelector('.rl').textContent = lbl(r.dataset.k); });
   document.querySelectorAll('.play').forEach(b => { b.title = t('preview'); });
-  document.querySelectorAll('#list [data-i18n], #panels [data-i18n]').forEach(e => { e.textContent = t(e.dataset.i18n); });
+  document.querySelectorAll('#list [data-i18n], #panels [data-i18n]').forEach(e => {
+    if (!e.dataset.i18n) return;
+    e.textContent = t(e.dataset.i18n).replace('{s}', e.dataset.n || '');
+  });
+  document.querySelectorAll('.badge').forEach(e => { if (e.textContent) e.textContent = t('ls_badge'); });
 }
 
 applyUI();
