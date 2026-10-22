@@ -15,6 +15,11 @@ from pydub.effects import normalize
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
+SYNC_API_KEY = os.getenv("SYNC_API_KEY", "")
+SYNC_MODEL = os.getenv("SYNC_MODEL", "lipsync-2")
+SYNC_BASE = "https://api.sync.so/v2"
+LIPSYNC_ENABLED = bool(SYNC_API_KEY)
+LIPSYNC_MAX_SECONDS = int(os.getenv("LIPSYNC_MAX_SECONDS", "20"))  # حد الخطة المجانية
 GEMINI_FALLBACK_MODEL = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-flash-lite-latest")
 
 # اللغات واللهجات المدعومة + أصوات Edge TTS المجانية.
@@ -490,6 +495,55 @@ def make_srt(segments: list[dict], texts: list[str], path: Path) -> None:
 
 def preview_tts(text: str, voice: str, rate: str, path: Path) -> None:
     asyncio.run(_tts_one(text, voice, rate, path))
+
+
+def lipsync(video_url: str, audio_url: str, raw_out: Path, timeout_s: int = 600) -> None:
+    """مطابقة الشفاه عبر Sync.so: ينتج فيديو بحركة فم تطابق الصوت المدبلج."""
+    if not SYNC_API_KEY:
+        raise RuntimeError("SYNC_API_KEY غير مضبوط")
+    headers = {"x-api-key": SYNC_API_KEY, "Content-Type": "application/json"}
+    media = [{"type": "video", "url": video_url}, {"type": "audio", "url": audio_url}]
+    bodies = [
+        {"model": SYNC_MODEL, "input": media, "options": {"sync_mode": "cut_off"}},
+        {"model": SYNC_MODEL, "input": media},
+        {"model": SYNC_MODEL, "video_url": video_url, "audio_url": audio_url},
+    ]
+    gen, last = None, ""
+    for body in bodies:  # نجرّب الصيغ المحتملة للطلب بالترتيب
+        r = httpx.post(f"{SYNC_BASE}/generate", json=body, headers=headers, timeout=60)
+        if r.status_code in (401, 403):
+            raise RuntimeError("مفتاح Sync.so غير صالح")
+        if r.status_code in (402, 429):
+            raise RuntimeError("انتهت حصة Sync.so المجانية أو تجاوزت الحد المسموح")
+        if r.status_code in (400, 422):
+            last = r.text[:160]
+            continue
+        r.raise_for_status()
+        gen = r.json()
+        break
+    if not gen or not gen.get("id"):
+        raise RuntimeError(f"رفضت خدمة Sync.so الطلب: {last or 'استجابة غير متوقعة'}")
+
+    deadline = time.time() + timeout_s
+    while time.time() < deadline:
+        time.sleep(8)
+        r = httpx.get(f"{SYNC_BASE}/generate/{gen['id']}", headers=headers, timeout=60)
+        r.raise_for_status()
+        d = r.json()
+        status = str(d.get("status", "")).lower()
+        if status == "completed":
+            url = d.get("outputUrl") or d.get("output_url") or d.get("video_url")
+            if not url:
+                raise RuntimeError("اكتملت المطابقة لكن بلا رابط ناتج")
+            with httpx.stream("GET", url, timeout=180, follow_redirects=True) as resp:
+                resp.raise_for_status()
+                with open(raw_out, "wb") as f:
+                    for chunk in resp.iter_bytes():
+                        f.write(chunk)
+            return
+        if status in ("failed", "rejected", "canceled", "cancelled"):
+            raise RuntimeError(f"فشلت مطابقة الشفاه: {d.get('error') or status}")
+    raise RuntimeError("انتهت مهلة مطابقة الشفاه")
 
 
 def mux(video: Path, dub: Path, out: Path) -> None:
