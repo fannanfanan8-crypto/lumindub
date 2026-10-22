@@ -3,6 +3,7 @@
 المسار: رفع ← تحليل (نسخ + ترجمة) ← مراجعة النص (اختيارية) ← دبلجة وتصدير.
 """
 import datetime
+import os
 import re
 import shutil
 import threading
@@ -56,6 +57,16 @@ def check_daily_limit(cid: str) -> None:
     USAGE[cid] = (today, n + 1)
 
 
+def public_base(request: Request) -> str:
+    """رابط الموقع العام (تحتاجه Sync.so لتنزيل الفيديو والصوت)."""
+    env = os.getenv("PUBLIC_BASE_URL") or os.getenv("RENDER_EXTERNAL_URL")
+    if env:
+        return env.rstrip("/")
+    proto = request.headers.get("x-forwarded-proto") or request.url.scheme
+    host = request.headers.get("x-forwarded-host") or request.headers.get("host", "")
+    return f"{proto}://{host}"
+
+
 def get_job(job_id: str) -> dict:
     job = JOBS.get(job_id)
     if not job:
@@ -107,24 +118,30 @@ def analyze(job_id: str, review: bool) -> None:
                         for s in segments
                     ],
                     "texts": {k: [{"text": str(t), "tts": t.tts} for t in v] for k, v in all_texts.items()},
+                    "lipsync": {
+                        "enabled": pl.LIPSYNC_ENABLED,
+                        "max_seconds": pl.LIPSYNC_MAX_SECONDS,
+                        "duration": round(total, 1),
+                    },
                 }
                 job.update(status="review", step="راجع النص ثم ابدأ الدبلجة", progress=100)
         except Exception as e:  # noqa: BLE001
             job.update(status="error", step="فشل", error=str(e))
             return
     if not review:
-        render(job_id, {k: [str(t) for t in v] for k, v in job["_lines"].items()}, {}, None)
+        render(job_id, {k: [str(t) for t in v] for k, v in job["_lines"].items()}, {}, None, [])
 
 
 # ----------------------------------------------------------- المرحلة 2: الدبلجة
 
-def render(job_id: str, texts: dict, voices: dict, rate: str | None) -> None:
+def render(job_id: str, texts: dict, voices: dict, rate: str | None, lipsync_keys: list) -> None:
     job = JOBS[job_id]
     folder = DATA / job_id
     video: Path = job["_video"]
     segments, total = job["_segments"], job["_total"]
     gender = job["gender"]
     langs = job["langs"]
+    job.pop("draft", None)
     job.update(status="running", step="في قائمة الانتظار", progress=1, error=None, outputs={})
     with JOB_LOCK:
         t0 = last = time.perf_counter()
@@ -163,9 +180,26 @@ def render(job_id: str, texts: dict, voices: dict, rate: str | None) -> None:
                     "srt": f"/files/{job_id}/{key}.srt",
                     "text": " ".join(lines),
                 }
-            job.update(status="done", step="اكتمل", progress=100, created=time.time())
         except Exception as e:  # noqa: BLE001
             job.update(status="error", step="فشل", error=str(e))
+            return
+
+    # مطابقة الشفاه خارج القفل: انتظار خدمة خارجية لا يستهلك المعالج، فلا نحجز الآخرين
+    for key in lipsync_keys:
+        label = pl.LANGUAGES[key]["label"]
+        job.update(step=f"مطابقة الشفاه: {label}", progress=96)
+        try:
+            base = job["_base"]
+            raw = folder / f"{key}_sync.mp4"
+            pl.lipsync(f"{base}/files/{job_id}/input.mp4", f"{base}/files/{job_id}/{key}/dub.mp3", raw)
+            final = folder / f"{key}_ls.mp4"
+            pl.mux(raw, folder / key / "dub.mp3", final)  # نعيد صوتنا فوق فيديو Sync.so
+            job["outputs"][key].update(url=f"/files/{job_id}/{key}_ls.mp4", lipsync=True)
+            print(f"[job {job_id}] lipsync[{key}] ok", flush=True)
+        except Exception as e:  # noqa: BLE001
+            job["outputs"][key]["note"] = f"تعذّرت مطابقة الشفاه ({e}). هذه نسخة بدونها."
+            print(f"[job {job_id}] lipsync[{key}] failed: {e}", flush=True)
+    job.update(status="done", step="اكتمل", progress=100, created=time.time())
 
 
 # --------------------------------------------------------------- نقاط النهاية
@@ -208,7 +242,7 @@ async def create_job(
         "created": time.time(), "status": "queued", "step": "في الانتظار",
         "progress": 0, "outputs": {}, "error": None, "source_language": None,
         "langs": keys, "gender": gender, "glossary": glossary[:1500],
-        "_video": video, "previews": 0,
+        "_video": video, "previews": 0, "_base": public_base(request),
     }
     threading.Thread(target=analyze, args=(job_id, review), daemon=True).start()
     return {"job_id": job_id}
@@ -260,8 +294,12 @@ def start_render(job_id: str, payload: dict = Body(...)):
     voices_in = payload.get("voices") or {}
     voices = {k: v for k, v in voices_in.items() if k in job["langs"] and v in pl.allowed_voices(k)}
     rate = clean_rate(payload.get("rate"), None)
+    ls_in = payload.get("lipsync") or []
+    lipsync_keys = []
+    if pl.LIPSYNC_ENABLED and job["_total"] <= pl.LIPSYNC_MAX_SECONDS:
+        lipsync_keys = [k for k in job["langs"] if k in ls_in]
     job["status"] = "running"  # يمنع الضغط المزدوج
-    threading.Thread(target=render, args=(job_id, texts, voices, rate), daemon=True).start()
+    threading.Thread(target=render, args=(job_id, texts, voices, rate, lipsync_keys), daemon=True).start()
     return {"ok": True}
 
 
